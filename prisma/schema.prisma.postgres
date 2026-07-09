@@ -1,0 +1,137 @@
+datasource db {
+  provider  = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  STAFF
+  ADMIN
+  REGISTRAR
+}
+
+enum ClearanceStatus {
+  NOT_SUBMITTED
+  PENDING_REVIEW
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  hashedPassword String
+  name           String
+  role           Role
+  phone          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? // Support for soft deletes
+
+  student        Student?
+  staff          Staff?
+  auditLogs      AuditLog[]
+  notifications  Notification[]
+
+  @@index([email])
+}
+
+model Student {
+  userId              String             @id
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matricNumber        String             @unique
+  department          String
+  faculty             String
+  level               String             // e.g., "400 Level"
+  sessionOfGraduation String             // e.g., "2024/2025"
+  profilePhotoUrl     String?
+  clearanceRequests   ClearanceRequest[]
+
+  @@index([matricNumber])
+}
+
+model Staff {
+  userId           String                @id
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments      StaffUnitAssignment[]
+  reviewedRequests ClearanceRequest[]    @relation("ReviewedByStaff")
+}
+
+model ClearingUnit {
+  id          String                @id @default(uuid())
+  name        String                @unique
+  description String?
+  isActive    Boolean               @default(true)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  assignments StaffUnitAssignment[]
+  requests    ClearanceRequest[]
+}
+
+model StaffUnitAssignment {
+  staffId      String
+  unitId       String
+  staff        Staff        @relation(fields: [staffId], references: [userId], onDelete: Cascade)
+  clearingUnit ClearingUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@id([staffId, unitId])
+}
+
+model ClearanceRequest {
+  id            String          @id @default(uuid())
+  studentId     String
+  student       Student         @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+  unitId        String
+  clearingUnit  ClearingUnit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  status        ClearanceStatus @default(NOT_SUBMITTED)
+  submittedAt   DateTime?
+  reviewedAt    DateTime?
+  reviewedBy    String?
+  reviewer      Staff?          @relation("ReviewedByStaff", fields: [reviewedBy], references: [userId], onDelete: SetNull)
+  rejectionNote String?
+  documents     Document[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([studentId, unitId])
+}
+
+model Document {
+  id         String           @id @default(uuid())
+  requestId  String
+  request    ClearanceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String           // Cloudinary or Supabase Storage URL
+  checksum   String           // SHA-256 for file integrity
+  uploadedAt DateTime         @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole  Role
+  action     String   // e.g. "APPROVE_CLEARANCE", "USER_LOGIN"
+  entityType String   // e.g. "ClearanceRequest", "User"
+  entityId   String?
+  metadata   Json?    // Detailed metadata (JSONB)
+  timestamp  DateTime @default(now())
+
+  @@index([actorId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // e.g., "STATUS_CHANGE", "GENERAL"
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
