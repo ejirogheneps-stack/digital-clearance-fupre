@@ -1,0 +1,89 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import StudentDashboard from "@/components/StudentDashboard";
+import StaffDashboard from "@/components/StaffDashboard";
+import AdminDashboard from "@/components/AdminDashboard";
+
+export default function DashboardPage() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("dscs_token");
+    const storedUser = localStorage.getItem("dscs_user");
+
+    if (!token || !storedUser) {
+      // Clear storage and redirect to login if auth parameters are missing
+      localStorage.removeItem("dscs_token");
+      localStorage.removeItem("dscs_user");
+      router.push("/login");
+    } else {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        localStorage.removeItem("dscs_token");
+        localStorage.removeItem("dscs_user");
+        router.push("/login");
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [router]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+    } catch (e) {
+      console.error("Logout endpoint failure:", e);
+    } finally {
+      localStorage.removeItem("dscs_token");
+      localStorage.removeItem("dscs_user");
+      router.push("/login");
+      router.refresh();
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#FAFBFF]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="animate-spin h-10 w-10 text-[#5932EA]" />
+          <span className="text-xs font-semibold text-[#9197B3] font-poppins">Loading workspace...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (user?.role === "STUDENT") {
+    return <StudentDashboard user={user} onLogout={handleLogout} />;
+  }
+
+  if (user?.role === "STAFF") {
+    return <StaffDashboard user={user} onLogout={handleLogout} />;
+  }
+
+  if (user?.role === "ADMIN" || user?.role === "REGISTRAR") {
+    return <AdminDashboard user={user} onLogout={handleLogout} />;
+  }
+
+  return (
+    <div className="flex h-screen w-screen items-center justify-center bg-[#FAFBFF]">
+      <div className="text-center font-poppins">
+        <h3 className="text-lg font-bold text-red-600">Access Denied</h3>
+        <p className="text-xs text-[#9197B3] mt-2">Your profile role is unrecognized.</p>
+        <button 
+          onClick={handleLogout} 
+          className="mt-4 px-4 py-2 bg-[#5932EA] text-white text-xs font-semibold rounded-lg shadow cursor-pointer"
+        >
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+}
