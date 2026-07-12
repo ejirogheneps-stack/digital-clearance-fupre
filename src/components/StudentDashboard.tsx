@@ -18,7 +18,8 @@ import {
   Download, 
   Loader2,
   X,
-  Menu
+  Menu,
+  Smile
 } from "lucide-react";
 
 interface ClearanceRequest {
@@ -413,10 +414,10 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
       {/* 2. Main Layout Context */}
       <main className="flex-1 min-h-screen pt-24 lg:pt-10 pb-10 px-6 lg:px-12 overflow-y-auto z-10 flex flex-col gap-8">
         {/* Banner Title Greeting */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="font-poppins font-normal text-2xl text-black">
-              Hello {user.name.split(" ")[0]} 👋🏼,
+            <h1 className="font-poppins font-normal text-2xl text-black flex items-center gap-2">
+              Hello {user.name.split(" ")[0]} <Smile className="w-6 h-6 text-amber-500 inline-block" />
             </h1>
             <p className="text-xs text-[#9197B3] mt-1 font-medium">
               Check your requirements and clearance status details below.
@@ -427,7 +428,7 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
           {isFullyCleared && (
             <button
               onClick={handleDownloadCertificate}
-              className="flex items-center gap-2 py-3 px-5 border border-[#00B087] bg-[rgba(22,192,152,0.1)] hover:bg-[rgba(22,192,152,0.2)] text-[#008767] font-semibold rounded-xl text-sm transition-all shadow-md cursor-pointer hover:translate-y-[-1px] active:translate-y-[1px]"
+              className="flex items-center justify-center gap-2 py-3 px-5 border border-[#00B087] bg-[rgba(22,192,152,0.1)] hover:bg-[rgba(22,192,152,0.2)] text-[#008767] font-semibold rounded-xl text-sm transition-all shadow-md cursor-pointer w-full sm:w-auto hover:translate-y-[-1px] active:translate-y-[1px]"
             >
               <Download className="w-4 h-4" /> Download Clearance Certificate
             </button>
@@ -489,7 +490,7 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
         <div className="bg-white py-8 px-6 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.5)] border border-[#F0F4FA] flex-1 flex flex-col justify-between min-h-[500px]">
           <div>
             {/* Header controls inside card table */}
-            <div className="flex justify-between items-center mb-6 px-4">
+            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 px-4">
               <div>
                 <h3 className="font-poppins font-semibold text-2xl text-black">
                   Clearance Directory
@@ -500,9 +501,9 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
               </div>
 
               {/* Search & Sort Widgets */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                 {/* Search control */}
-                <div className="relative w-64">
+                <div className="relative w-full md:w-64">
                   <Search className="w-5 h-5 text-[#B5B7C0] absolute left-3 top-2.5" />
                   <input
                     type="text"
@@ -514,7 +515,7 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
                 </div>
 
                 {/* Filter status dropdown */}
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}

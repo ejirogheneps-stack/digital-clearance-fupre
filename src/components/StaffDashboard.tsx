@@ -15,6 +15,7 @@ import {
   Check, 
   X,
   Menu,
+  Smile,
   Loader2,
   AlertTriangle 
 } from "lucide-react";
@@ -406,8 +407,8 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
       <main className="flex-1 min-h-screen pt-24 lg:pt-10 pb-10 px-6 lg:px-12 overflow-y-auto z-10 flex flex-col gap-8">
         {/* Banner Title Greeting */}
         <div>
-          <h1 className="font-poppins font-normal text-2xl text-black">
-            Hello {user.name.split(" ")[0]} 👋🏼,
+          <h1 className="font-poppins font-normal text-2xl text-black flex items-center gap-2">
+            Hello {user.name.split(" ")[0]} <Smile className="w-6 h-6 text-amber-500 inline-block" />
           </h1>
           <p className="text-xs text-[#9197B3] mt-1 font-medium">
             You are managing the queue for the **{unitName || "Clearance Office"}**.
@@ -469,7 +470,7 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
         <div className="bg-white py-8 px-6 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.5)] border border-[#F0F4FA] flex-1 flex flex-col justify-between min-h-[500px]">
           <div>
             {/* Header controls inside card table */}
-            <div className="flex justify-between items-center mb-6 px-4">
+            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 px-4">
               <div>
                 <h3 className="font-poppins font-semibold text-2xl text-black">
                   Clearance Queue
@@ -480,9 +481,9 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
               </div>
 
               {/* Search & Sort Widgets */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                 {/* Search control */}
-                <div className="relative w-64">
+                <div className="relative w-full md:w-64">
                   <Search className="w-5 h-5 text-[#B5B7C0] absolute left-3 top-2.5" />
                   <input
                     type="text"
@@ -494,11 +495,11 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
                 </div>
 
                 {/* Filter status dropdown */}
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="bg-[#F9FBFF] border border-[#EEEEEE] rounded-xl px-4 py-2 text-xs text-[#7E7E7E] focus:outline-none focus:ring-2 focus:ring-[#5932EA] transition-all font-poppins cursor-pointer"
+                    className="bg-[#F9FBFF] border border-[#EEEEEE] rounded-xl px-4 py-2 text-xs text-[#7E7E7E] focus:outline-none focus:ring-2 focus:ring-[#5932EA] transition-all font-poppins cursor-pointer w-full"
                   >
                     <option value="all">Sort by : All</option>
                     <option value="pending">Pending Action</option>
