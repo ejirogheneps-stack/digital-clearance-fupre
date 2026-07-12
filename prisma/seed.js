@@ -1,15 +1,19 @@
 require("dotenv").config();
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-// Explicitly override DATABASE_URL for local SQLite/LibSQL development execution
-process.env.DATABASE_URL = "file:./dev.db";
-
-const { PrismaLibSql } = require("@prisma/adapter-libsql");
 const { PrismaClient } = require("@prisma/client");
+const { PrismaPg } = require("@prisma/adapter-pg");
+const { Pool } = require("pg");
 const bcryptjs = require("bcryptjs");
 
-const adapter = new PrismaLibSql({
-  url: "file:./dev.db",
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({
+  connectionString,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {

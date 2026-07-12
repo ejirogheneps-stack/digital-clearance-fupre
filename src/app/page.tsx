@@ -341,9 +341,17 @@ export default function LandingPage() {
             </div>
             <span className="font-poppins font-bold text-base text-black">FUPRE DSCS</span>
           </div>
-          <span className="text-xs text-[#9197B3] font-medium font-poppins">
-            © {new Date().getFullYear()} Federal University of Petroleum Resources, Effurun. All rights reserved.
-          </span>
+          <div className="flex flex-col items-center sm:items-end gap-1 text-center sm:text-right">
+            <span className="text-xs text-[#9197B3] font-medium font-poppins">
+              © {new Date().getFullYear()} Federal University of Petroleum Resources, Effurun. All rights reserved.
+            </span>
+            <div className="text-[10px] text-[#9197B3]/80 font-poppins mt-1 max-w-md leading-relaxed">
+              built by <strong className="text-[#5932EA] font-semibold">PETER-SADUWA EJIROGHENE</strong> (COS/9558/2022)<br />
+              DEPARTMENT OF COMPUTER SCIENCE,<br />
+              FEDERAL UNIVERSITY OF PETROLEUM RESOURCES, EFFURUN, DELTA STATE, NIGERIA.<br />
+              JULY, 2026
+            </div>
+          </div>
         </div>
       </footer>
     </div>
