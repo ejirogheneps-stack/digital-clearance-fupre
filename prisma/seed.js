@@ -1,5 +1,4 @@
 require("dotenv").config();
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const { PrismaClient } = require("@prisma/client");
 const { PrismaPg } = require("@prisma/adapter-pg");
@@ -7,8 +6,9 @@ const { Pool } = require("pg");
 const bcryptjs = require("bcryptjs");
 
 const connectionString = process.env.DATABASE_URL;
+const cleanConnectionString = connectionString ? connectionString.split("?")[0] : undefined;
 const pool = new Pool({
-  connectionString,
+  connectionString: cleanConnectionString,
   ssl: {
     rejectUnauthorized: false,
   },
