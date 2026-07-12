@@ -18,6 +18,7 @@ import {
   Settings, 
   History,
   X,
+  Menu,
   Check,
   AlertTriangle,
   Loader2
@@ -81,6 +82,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
   const [overrideLoading, setOverrideLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("dscs_token") : null;
 
@@ -226,16 +228,130 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
 
   return (
     <div className="flex min-h-screen bg-[#FAFBFF] relative overflow-hidden">
-      {/* 1. Sidebar Menu (Figma Specifications) */}
-      <aside className="w-[306px] min-h-screen bg-white shadow-[0px_10px_60px_rgba(226,236,249,0.5)] flex flex-col justify-between py-9 px-7 border-r border-[#F0F4FA] shrink-0 z-10">
+      {/* Mobile Top Navigation Header */}
+      <header className="lg:hidden fixed top-0 left-0 w-full h-16 bg-white border-b border-[#F0F4FA] flex items-center justify-between px-6 z-20 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <img 
+            src="/fupre_logo.png" 
+            alt="FUPRE Logo" 
+            className="w-8 h-8 object-contain"
+          />
+          <div>
+            <span className="font-poppins font-bold text-sm text-slate-900 tracking-tight">FUPRE DSCS</span>
+            <span className="block text-[8px] text-[#5932EA] uppercase tracking-wider font-bold -mt-1">Admin Portal</span>
+          </div>
+        </div>
+        <button 
+          onClick={() => setMobileMenuOpen(true)}
+          className="p-1.5 rounded-lg border border-[#EEEEEE] hover:bg-slate-50 cursor-pointer"
+        >
+          <Menu className="w-6 h-6 text-slate-700" />
+        </button>
+      </header>
+
+      {/* Mobile Side-Drawer Overlay */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop overlay */}
+          <div 
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+          ></div>
+          
+          {/* Drawer Panel */}
+          <aside className="relative w-72 max-w-xs bg-white h-full flex flex-col justify-between py-6 px-5 border-r shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+            <div className="flex flex-col">
+              {/* Close Button & Header */}
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2">
+                  <img 
+                    src="/fupre_logo.png" 
+                    alt="FUPRE Logo" 
+                    className="w-8 h-8 object-contain"
+                  />
+                  <span className="font-poppins font-bold text-xs text-slate-900">FUPRE DSCS</span>
+                </div>
+                <button 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5 text-slate-600" />
+                </button>
+              </div>
+
+              {/* Navigation Menu */}
+              <nav className="space-y-3">
+                <button 
+                  onClick={() => { setActiveTab("students"); setMobileMenuOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-all font-poppins font-medium text-xs text-left cursor-pointer ${
+                    activeTab === "students" 
+                      ? "bg-[#5932EA] text-white" 
+                      : "text-[#9197B3] hover:bg-slate-50 hover:text-[#292D32]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Users className="w-4 h-4" />
+                    <span>Graduating Students</span>
+                  </div>
+                </button>
+                
+                <button 
+                  onClick={() => { setActiveTab("audit"); setMobileMenuOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-all font-poppins font-medium text-xs text-left cursor-pointer ${
+                    activeTab === "audit" 
+                      ? "bg-[#5932EA] text-white" 
+                      : "text-[#9197B3] hover:bg-slate-50 hover:text-[#292D32]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <History className="w-4 h-4" />
+                    <span>Audit Logs</span>
+                  </div>
+                </button>
+
+                {/* Accessible Sign Out */}
+                <button 
+                  onClick={() => { setMobileMenuOpen(false); onLogout(); }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-red-500 hover:bg-red-50 rounded-lg font-poppins font-medium text-xs text-left cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 text-red-500" />
+                  <span>Sign Out</span>
+                </button>
+              </nav>
+            </div>
+
+            {/* Profile bottom */}
+            <div className="flex items-center justify-between pt-4 border-t border-[#EEEEEE]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#EAABF0] to-[#5932EA] flex items-center justify-center font-bold text-white uppercase text-xs">
+                  {user.name.charAt(0)}
+                </div>
+                <div>
+                  <span className="block font-poppins font-semibold text-xs text-black max-w-[100px] truncate" title={user.name}>
+                    {user.name}
+                  </span>
+                  <span className="block text-[8px] text-[#757575] font-poppins capitalize">
+                    {user.role.toLowerCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* 1. Desktop Sidebar Menu */}
+      <aside className="hidden lg:flex w-[306px] min-h-screen bg-white shadow-[0px_10px_60px_rgba(226,236,249,0.5)] flex flex-col justify-between py-9 px-7 border-r border-[#F0F4FA] shrink-0 z-10">
         <div className="flex flex-col">
           {/* Logo Header */}
           <div className="flex items-center gap-3 mb-12">
-            <div className="w-9 h-9 bg-gradient-to-tr from-[#5932EA] to-[#4623E9] rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(89,50,234,0.3)]">
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
+            <img 
+              src="/fupre_logo.png" 
+              alt="FUPRE Logo" 
+              className="w-10 h-10 object-contain"
+            />
             <div>
-              <span className="font-poppins font-semibold text-2xl text-black">Dashboard</span>
+              <span className="font-poppins font-semibold text-xl text-black">Dashboard</span>
               <span className="block text-[10px] text-[#838383] -mt-1 font-medium">v.01</span>
             </div>
           </div>
@@ -269,6 +385,15 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                 <span>Audit Logs</span>
               </div>
             </button>
+
+            {/* Accessible Labeled Logout Button */}
+            <button 
+              onClick={onLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-all font-poppins font-medium text-sm text-left cursor-pointer"
+            >
+              <LogOut className="w-5 h-5 text-red-500" />
+              <span>Sign Out</span>
+            </button>
           </nav>
         </div>
 
@@ -300,7 +425,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
       </aside>
 
       {/* 2. Main Layout Context */}
-      <main className="flex-1 min-h-screen py-10 px-12 overflow-y-auto z-10 flex flex-col gap-8">
+      <main className="flex-1 min-h-screen pt-24 lg:pt-10 pb-10 px-6 lg:px-12 overflow-y-auto z-10 flex flex-col gap-8">
         {/* Banner Title Greeting */}
         <div>
           <h1 className="font-poppins font-normal text-2xl text-black">

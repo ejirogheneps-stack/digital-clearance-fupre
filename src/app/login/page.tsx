@@ -75,9 +75,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md z-10">
         {/* FUPRE Logo Banner */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-tr from-[#5932EA] to-[#4623E9] rounded-2xl flex items-center justify-center shadow-lg shadow-[rgba(89,50,234,0.3)] mb-4 transform hover:rotate-6 transition-transform">
-            <GraduationCap className="w-9 h-9 text-white" />
-          </div>
+          <img 
+            src="/fupre_logo.png" 
+            alt="FUPRE Logo" 
+            className="w-16 h-16 object-contain mb-4 transform hover:scale-105 transition-transform"
+          />
           <h2 className="text-center text-3xl font-extrabold text-[#292D32] tracking-tight">
             FUPRE DSCS
           </h2>

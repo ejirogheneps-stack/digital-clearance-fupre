@@ -155,10 +155,12 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
           
           {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => router.push("/")}>
-            <div className="w-10 h-10 bg-gradient-to-tr from-[#5932EA] to-[#4623E9] rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(89,50,234,0.25)] transition-transform group-hover:scale-105 duration-300">
-              <GraduationCap className="w-5.5 h-5.5 text-white" />
-            </div>
+          <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => router.push("/")}>
+            <img 
+              src="/fupre_logo.png" 
+              alt="FUPRE Logo" 
+              className="w-10 h-10 object-contain transition-transform group-hover:scale-105 duration-300"
+            />
             <div>
               <span className="font-poppins font-bold text-lg text-slate-900 tracking-tight">FUPRE DSCS</span>
               <span className="block text-[9px] text-[#5932EA] uppercase tracking-wider font-bold -mt-1">Digital Clearance</span>
@@ -720,10 +722,12 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-slate-150 py-12 relative z-10 text-slate-500">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
           
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-tr from-[#5932EA] to-[#4623E9] rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-4.5 h-4.5 text-white" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img 
+              src="/fupre_logo.png" 
+              alt="FUPRE Logo" 
+              className="w-8 h-8 object-contain"
+            />
             <span className="font-poppins font-bold text-sm text-slate-900 tracking-tight">FUPRE DSCS</span>
           </div>
 
