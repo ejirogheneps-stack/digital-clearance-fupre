@@ -384,15 +384,14 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
           </nav>
         </div>
 
-        <div className="flex flex-col gap-6">
           {/* User profile section bottom sidebar (Ellipse 8 / Group 30) */}
-          <div className="flex items-center justify-between pt-4 border-t border-[#EEEEEE]">
+          <div className="flex items-center pt-4 border-t border-[#EEEEEE]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#EAABF0] to-[#5932EA] flex items-center justify-center font-bold text-white uppercase shadow-sm">
                 {user.name.charAt(0)}
               </div>
               <div>
-                <span className="block font-poppins font-semibold text-sm text-black max-w-[120px] truncate">
+                <span className="block font-poppins font-semibold text-sm text-black max-w-[150px] truncate">
                   {user.name}
                 </span>
                 <span className="block text-[10px] text-[#757575] font-poppins">
@@ -400,15 +399,7 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
                 </span>
               </div>
             </div>
-            <button 
-              onClick={onLogout}
-              className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-[#9197B3] hover:text-[#DF0404] transition-all cursor-pointer"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
           </div>
-        </div>
       </aside>
 
       {/* 2. Main Layout Context */}
