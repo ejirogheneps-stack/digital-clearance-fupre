@@ -22,7 +22,8 @@ import {
   Smile,
   Check,
   AlertTriangle,
-  Loader2
+  Loader2,
+  ArrowRight
 } from "lucide-react";
 
 interface Student {
@@ -139,10 +140,8 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
       setOverrideRequest(null);
       setOverrideNote("");
       
-      // Reload student data
       await fetchAdminData();
       
-      // Update selected student UI state if open
       if (selectedStudent) {
         const updatedStud = students.find(s => s.userId === selectedStudent.userId);
         if (updatedStud) {
@@ -179,14 +178,14 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
 
   const getOverallStatusStyle = (student: Student) => {
     const reqs = student.clearanceRequests;
-    if (reqs.length === 0) return { bg: "bg-[#FAFBFF]", text: "text-[#7E7E7E]", label: "Uninitialized" };
+    if (reqs.length === 0) return { bg: "bg-slate-50", text: "text-slate-500", border: "border-slate-200", label: "Uninitialized" };
     
     const allApproved = reqs.every(r => r.status === "APPROVED");
     if (allApproved) {
       return { 
-        bg: "bg-[rgba(22,192,152,0.15)]", 
-        border: "border-[#00B087]", 
-        text: "text-[#008767]", 
+        bg: "bg-green-50", 
+        border: "border-green-300", 
+        text: "text-green-700", 
         label: "Fully Cleared" 
       };
     }
@@ -194,75 +193,110 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
     const hasRejections = reqs.some(r => r.status === "REJECTED");
     if (hasRejections) {
       return { 
-        bg: "bg-[#FFC5C5]", 
-        border: "border-[#DF0404]", 
-        text: "text-[#DF0404]", 
+        bg: "bg-red-50", 
+        border: "border-red-300", 
+        text: "text-red-700", 
         label: "Attention Needed" 
       };
     }
 
     return { 
-      bg: "bg-[rgba(255,197,197,0.15)]", 
-      border: "border-[#DF9204]", 
-      text: "text-[#DF9204]", 
+      bg: "bg-amber-50", 
+      border: "border-amber-300", 
+      text: "text-amber-700", 
       label: "Pending Review" 
     };
   };
 
   const getUnitStatusColor = (status: string) => {
     switch (status) {
-      case "APPROVED": return "text-green-600 bg-green-50 border-green-200";
-      case "REJECTED": return "text-red-600 bg-red-50 border-red-200";
+      case "APPROVED": return "text-green-650 bg-green-50 border-green-200";
+      case "REJECTED": return "text-red-650 bg-red-50 border-red-200";
       case "PENDING_REVIEW":
-      case "UNDER_REVIEW": return "text-amber-600 bg-amber-50 border-amber-200";
+      case "UNDER_REVIEW": return "text-amber-650 bg-amber-50 border-amber-200";
       default: return "text-zinc-500 bg-zinc-50 border-zinc-200";
     }
   };
 
+  const handleScrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
   if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#FAFBFF]">
-        <Loader2 className="animate-spin h-10 w-10 text-[#5932EA]" />
+      <div className="flex h-screen w-screen items-center justify-center bg-[#D2D7DF]">
+        <Loader2 className="animate-spin h-10 w-10 text-[#3482B9]" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-[#FAFBFF] relative overflow-hidden">
-      {/* Mobile Top Navigation Header */}
-      <header className="lg:hidden fixed top-0 left-0 w-full h-16 bg-white border-b border-[#F0F4FA] flex items-center justify-between px-6 z-20 shadow-sm">
-        <div className="flex items-center gap-2.5">
-          <img 
-            src="/fupre_logo.png" 
-            alt="FUPRE Logo" 
-            className="w-8 h-8 object-contain"
-          />
-          <div>
-            <span className="font-poppins font-bold text-sm text-slate-900 tracking-tight">FUPRE DSCS</span>
-            <span className="block text-[8px] text-[#5932EA] uppercase tracking-wider font-bold -mt-1">Admin Portal</span>
+    <div className="min-h-screen bg-[#D2D7DF] relative flex flex-col overflow-x-hidden selection:bg-[#3482B9] selection:text-white">
+      
+      {/* 1. Dual-Tier Header */}
+      <header className="fixed top-0 left-0 w-full z-30 shadow-md">
+        {/* Tier 1: White logo header banner */}
+        <div className="bg-white h-16 px-4 sm:px-6 flex items-center justify-between border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/fupre_logo.png" 
+              alt="FUPRE Logo" 
+              className="w-10 h-10 object-contain shrink-0"
+            />
+            <div className="text-left font-poppins">
+              <h1 className="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight tracking-tight uppercase">
+                Federal University of
+              </h1>
+              <h1 className="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight tracking-tight uppercase">
+                Petroleum Resources, Effurun
+              </h1>
+              <span className="block font-bold text-red-800 text-[8px] sm:text-[9px] tracking-wider uppercase mt-0.5">
+                Excellence and Relevance
+              </span>
+            </div>
+          </div>
+          <div className="hidden sm:block text-slate-400 font-poppins text-xs font-bold uppercase tracking-wider">
+            Admin Portal
           </div>
         </div>
-        <button 
-          onClick={() => setMobileMenuOpen(true)}
-          className="p-1.5 rounded-lg border border-[#EEEEEE] hover:bg-slate-50 cursor-pointer"
-        >
-          <Menu className="w-6 h-6 text-slate-700" />
-        </button>
+
+        {/* Tier 2: Blue Navigation Bar */}
+        <div className="bg-[#3482B9] h-12 px-4 sm:px-6 flex items-center justify-between text-white shadow-inner">
+          <button 
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="hidden md:inline text-xs font-semibold">{user.name}</span>
+              <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs uppercase cursor-pointer" onClick={() => setMobileMenuOpen(true)}>
+                {user.name.charAt(0)}
+              </div>
+            </div>
+            <button 
+              className="p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </header>
 
-      {/* Mobile Side-Drawer Overlay */}
+      {/* Slide-Drawer Side Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop overlay */}
+        <div className="fixed inset-0 z-50 flex">
           <div 
             onClick={() => setMobileMenuOpen(false)}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
           ></div>
           
-          {/* Drawer Panel */}
           <aside className="relative w-72 max-w-xs bg-white h-full flex flex-col justify-between py-6 px-5 border-r shadow-2xl z-10 animate-in slide-in-from-left duration-200">
             <div className="flex flex-col">
-              {/* Close Button & Header */}
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2">
                   <img 
@@ -280,14 +314,13 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                 </button>
               </div>
 
-              {/* Navigation Menu */}
               <nav className="space-y-3">
                 <button 
                   onClick={() => { setActiveTab("students"); setMobileMenuOpen(false); }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-all font-poppins font-medium text-xs text-left cursor-pointer ${
                     activeTab === "students" 
-                      ? "bg-[#5932EA] text-white" 
-                      : "text-[#9197B3] hover:bg-slate-50 hover:text-[#292D32]"
+                      ? "bg-[#3482B9] text-white" 
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
@@ -300,8 +333,8 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                   onClick={() => { setActiveTab("audit"); setMobileMenuOpen(false); }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-all font-poppins font-medium text-xs text-left cursor-pointer ${
                     activeTab === "audit" 
-                      ? "bg-[#5932EA] text-white" 
-                      : "text-[#9197B3] hover:bg-slate-50 hover:text-[#292D32]"
+                      ? "bg-[#3482B9] text-white" 
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
@@ -310,7 +343,6 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                   </div>
                 </button>
 
-                {/* Accessible Sign Out */}
                 <button 
                   onClick={() => { setMobileMenuOpen(false); onLogout(); }}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-red-500 hover:bg-red-50 rounded-lg font-poppins font-medium text-xs text-left cursor-pointer"
@@ -321,17 +353,16 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
               </nav>
             </div>
 
-            {/* Profile bottom */}
-            <div className="flex items-center justify-between pt-4 border-t border-[#EEEEEE]">
+            <div className="flex items-center pt-4 border-t border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#EAABF0] to-[#5932EA] flex items-center justify-center font-bold text-white uppercase text-xs">
+                <div className="w-8 h-8 rounded-full bg-[#3482B9] flex items-center justify-center font-bold text-white uppercase text-xs">
                   {user.name.charAt(0)}
                 </div>
                 <div>
-                  <span className="block font-poppins font-semibold text-xs text-black max-w-[100px] truncate" title={user.name}>
+                  <span className="block font-poppins font-semibold text-xs text-slate-800 max-w-[140px] truncate" title={user.name}>
                     {user.name}
                   </span>
-                  <span className="block text-[8px] text-[#757575] font-poppins capitalize">
+                  <span className="block text-[8px] text-slate-400 font-poppins capitalize">
                     {user.role.toLowerCase()}
                   </span>
                 </div>
@@ -341,361 +372,329 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
         </div>
       )}
 
-      {/* 1. Desktop Sidebar Menu */}
-      <aside className="hidden lg:flex w-[306px] min-h-screen bg-white shadow-[0px_10px_60px_rgba(226,236,249,0.5)] flex flex-col justify-between py-9 px-7 border-r border-[#F0F4FA] shrink-0 z-10">
-        <div className="flex flex-col">
-          {/* Logo Header */}
-          <div className="flex items-center gap-3 mb-12">
-            <img 
-              src="/fupre_logo.png" 
-              alt="FUPRE Logo" 
-              className="w-10 h-10 object-contain"
-            />
-            <div>
-              <span className="font-poppins font-semibold text-xl text-black">Dashboard</span>
-              <span className="block text-[10px] text-[#838383] -mt-1 font-medium">v.01</span>
+      {/* 2. Main Content Grid */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-12 flex flex-col gap-6 z-10">
+        
+        {/* Title & Breadcrumb Block */}
+        <div className="flex flex-col gap-2 mt-2">
+          <h2 className="font-poppins font-bold text-xl sm:text-2xl text-slate-800">
+            {activeTab === "students" ? "Graduating Students" : "System Audit Logs"}
+          </h2>
+          
+          <div className="bg-[#E2E8F0] px-4 py-2.5 rounded-lg text-xs font-semibold text-slate-600 flex items-center gap-2 border border-slate-300/40">
+            <LayoutDashboard className="w-4 h-4 text-slate-500 shrink-0" />
+            <span>Home</span>
+            <span className="text-slate-400 font-normal">&gt;</span>
+            <span className="text-slate-500 font-normal">{activeTab === "students" ? "Students" : "Audit"}</span>
+          </div>
+        </div>
+
+
+        {/* 4. Portal Statistics widgets */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-poppins">
+          {/* Card 1: Registered Students (Green) */}
+          <div className="bg-[#00A65A] text-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between min-h-[140px] transform hover:scale-[1.01] transition-transform">
+            <div className="p-6">
+              <span className="block font-bold text-4xl mb-1">{totalStudentsCount}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/80">Registered Profiles</span>
+            </div>
+            <div 
+              className="bg-[#008d4c] py-2 px-4 text-center text-[10px] sm:text-xs font-semibold text-white/95 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-[#00733e] transition-colors" 
+              onClick={() => handleScrollToSection("main-view")}
+            >
+              <span>More info</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </div>
 
-          {/* List Menu Items */}
-          <nav className="space-y-4">
-            <button 
-              onClick={() => setActiveTab("students")}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all group font-poppins font-medium text-sm cursor-pointer ${
-                activeTab === "students" 
-                  ? "bg-[#5932EA] text-white" 
-                  : "text-[#9197B3] hover:bg-[#FAFBFF] hover:text-[#292D32]"
-              }`}
+          {/* Card 2: Fully Cleared (Orange) */}
+          <div className="bg-[#F39C12] text-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between min-h-[140px] transform hover:scale-[1.01] transition-transform">
+            <div className="p-6">
+              <span className="block font-bold text-4xl mb-1">{fullyClearedCount}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/80">Fully Cleared</span>
+            </div>
+            <div 
+              className="bg-[#db8b0b] py-2 px-4 text-center text-[10px] sm:text-xs font-semibold text-white/95 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-[#c87f0a] transition-colors" 
+              onClick={() => handleScrollToSection("main-view")}
             >
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5" />
-                <span>Graduating Students</span>
-              </div>
-            </button>
+              <span>More info</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Card 3: Uncleared Status (Red style) */}
+          <div className="bg-[#DD4B39] text-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between min-h-[140px] transform hover:scale-[1.01] transition-transform">
+            <div className="p-6">
+              <span className="block font-bold text-4xl mb-1">{pendingStudentsCount}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/80">Reviews Pending</span>
+            </div>
+            <div 
+              className="bg-[#d73925] py-2 px-4 text-center text-[10px] sm:text-xs font-semibold text-white/95 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-[#c23321] transition-colors" 
+              onClick={() => handleScrollToSection("main-view")}
+            >
+              <span>More info</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Responsive Main Content Area (Directory + Profile card) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* Main List Box (8 columns on lg) */}
+          <div id="main-view" className="lg:col-span-8 bg-white py-6 px-4 sm:px-6 rounded-2xl shadow-md border border-slate-200 flex flex-col justify-between min-h-[500px]">
             
-            <button 
-              onClick={() => setActiveTab("audit")}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all group font-poppins font-medium text-sm cursor-pointer ${
-                activeTab === "audit" 
-                  ? "bg-[#5932EA] text-white" 
-                  : "text-[#9197B3] hover:bg-[#FAFBFF] hover:text-[#292D32]"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <History className="w-5 h-5" />
-                <span>Audit Logs</span>
-              </div>
-            </button>
-
-            {/* Accessible Labeled Logout Button */}
-            <button 
-              onClick={onLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-all font-poppins font-medium text-sm text-left cursor-pointer"
-            >
-              <LogOut className="w-5 h-5 text-red-500" />
-              <span>Sign Out</span>
-            </button>
-          </nav>
-        </div>
-
-          {/* User profile section bottom sidebar (Ellipse 8 / Group 30) */}
-          <div className="flex items-center pt-4 border-t border-[#EEEEEE]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#EAABF0] to-[#5932EA] flex items-center justify-center font-bold text-white uppercase shadow-sm">
-                {user.name.charAt(0)}
-              </div>
+            {activeTab === "students" ? (
+              /* Students List */
               <div>
-                <span className="block font-poppins font-semibold text-sm text-black max-w-[150px] truncate" title={user.name}>
-                  {user.name}
-                </span>
-                <span className="block text-[10px] text-[#757575] font-poppins capitalize">
-                  {user.role.toLowerCase()}
-                </span>
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 px-2">
+                  <div>
+                    <h3 className="font-poppins font-semibold text-xl text-slate-800">
+                      Graduating Students
+                    </h3>
+                    <span className="text-xs text-[#00A65A] font-poppins font-semibold">
+                      Student Database
+                    </span>
+                  </div>
+
+                  {/* Filters */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-56">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search Student name or Matric"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-[#292D32] focus:outline-none focus:ring-2 focus:ring-[#3482B9] transition-all font-poppins"
+                      />
+                    </div>
+
+                    <div className="relative w-full sm:w-auto">
+                      <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#3482B9] transition-all font-poppins cursor-pointer"
+                      >
+                        <option value="all">Sort by : All</option>
+                        <option value="cleared">Fully Cleared</option>
+                        <option value="pending">Review Pending</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scrollable Table */}
+                <div className="overflow-x-auto rounded-lg border border-slate-100">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold text-slate-400 font-poppins">
+                        <th className="py-3 px-4">Graduating Student</th>
+                        <th className="py-3 px-4">Department</th>
+                        <th className="py-3 px-4">Faculty</th>
+                        <th className="py-3 px-4 text-center">Clearance Status</th>
+                        <th className="py-3 px-4 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-poppins text-xs font-medium text-[#292D32]">
+                      {filteredStudents.length > 0 ? (
+                        filteredStudents.map((stud) => {
+                          const style = getOverallStatusStyle(stud);
+                          return (
+                            <tr key={stud.userId} className="hover:bg-slate-50/55 transition-all">
+                              <td className="py-4 px-4">
+                                <span className="block font-semibold text-sm text-slate-800">
+                                  {stud.user.name}
+                                </span>
+                                <span className="block text-[10px] text-slate-400">
+                                  {stud.matricNumber} / {stud.user.email}
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 text-slate-500">
+                                {stud.department}
+                              </td>
+                              <td className="py-4 px-4 text-slate-500">
+                                {stud.faculty}
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <span className={`inline-block border rounded-md px-2.5 py-1 text-[11px] font-semibold ${style.bg} ${style.border} ${style.text} w-32 text-center`}>
+                                  {style.label}
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <button
+                                  onClick={() => setSelectedStudent(stud)}
+                                  className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-white bg-[#3482B9] hover:bg-[#2a6996] rounded-xl px-3.5 py-2 transition-all shadow-sm hover:shadow-md cursor-pointer shrink-0"
+                                >
+                                  <Eye className="w-3.5 h-3.5" /> View Progress
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="py-12 px-4 text-center text-slate-400">
+                            No students found matching search filters.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 px-2 font-poppins text-xs font-semibold">
+                  <span className="text-slate-400">
+                    Showing {filteredStudents.length} of {students.length} entries
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button className="flex items-center justify-center w-6 h-6 border border-slate-200 bg-slate-50 rounded text-slate-500 disabled:opacity-50" disabled>
+                      &lt;
+                    </button>
+                    <button className="flex items-center justify-center w-6 h-6 border border-[#3482B9] bg-[#3482B9] rounded text-white font-bold">
+                      1
+                    </button>
+                    <button className="flex items-center justify-center w-6 h-6 border border-slate-200 bg-slate-50 rounded text-slate-500 disabled:opacity-50" disabled>
+                      &gt;
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-      </aside>
-
-      {/* 2. Main Layout Context */}
-      <main className="flex-1 min-h-screen pt-24 lg:pt-10 pb-10 px-6 lg:px-12 overflow-y-auto z-10 flex flex-col gap-8">
-        {/* Banner Title Greeting */}
-        <div>
-          <h1 className="font-poppins font-normal text-2xl text-black flex items-center gap-2">
-            Hello Administrator <Smile className="w-6 h-6 text-amber-500 inline-block" />
-          </h1>
-          <p className="text-xs text-[#9197B3] mt-1 font-medium">
-            Manage student registrations, clearing units overrides, and view transactions.
-          </p>
-        </div>
-
-        {/* 3. Statistics Widgets Rows (Figma Earning layout parameters) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white py-6 px-10 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.5)] border border-[#F0F4FA]">
-          {/* Stats 1: Total Students */}
-          <div className="flex items-center gap-5 pr-6 border-r border-[#F0F0F0] last:border-none">
-            <div className="w-[84px] h-[84px] rounded-full bg-gradient-to-tr from-[#D3FFE7] to-[#EFFFF6] flex items-center justify-center">
-              <Users className="w-10 h-10 text-[#00AC4F]" />
-            </div>
-            <div>
-              <span className="block text-xs font-poppins text-[#ACACAC] mb-1">Graduating Students</span>
-              <span className="block font-poppins font-semibold text-3xl text-[#333333] leading-none mb-1">
-                {totalStudentsCount}
-              </span>
-              <span className="text-[10px] text-[#00AC4F] font-bold">
-                Registered profiles
-              </span>
-            </div>
-          </div>
-
-          {/* Stats 2: Fully Cleared */}
-          <div className="flex items-center gap-5 pr-6 border-r border-[#F0F0F0] last:border-none">
-            <div className="w-[84px] h-[84px] rounded-full bg-blue-50 flex items-center justify-center">
-              <UserCheck className="w-10 h-10 text-[#5932EA]" />
-            </div>
-            <div>
-              <span className="block text-xs font-poppins text-[#ACACAC] mb-1">Fully Cleared</span>
-              <span className="block font-poppins font-semibold text-3xl text-[#333333] leading-none mb-1">
-                {fullyClearedCount}
-              </span>
-              <span className="text-[10px] text-[#5932EA] font-bold">
-                Clearance certificate unlocked
-              </span>
-            </div>
-          </div>
-
-          {/* Stats 3: Action Pending */}
-          <div className="flex items-center gap-5 last:border-none">
-            <div className="w-[84px] h-[84px] rounded-full bg-orange-50 flex items-center justify-center">
-              <AlertCircle className="w-10 h-10 text-orange-500" />
-            </div>
-            <div>
-              <span className="block text-xs font-poppins text-[#ACACAC] mb-1">Uncleared Status</span>
-              <span className="block font-poppins font-semibold text-3xl text-[#333333] leading-none mb-1">
-                {pendingStudentsCount}
-              </span>
-              <span className="text-[10px] text-orange-500 font-bold">
-                Require clearing reviews
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Table Directory Section (Figma Product box card parameters) */}
-        {activeTab === "students" ? (
-          <div className="bg-white py-8 px-6 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.5)] border border-[#F0F4FA] flex-1 flex flex-col justify-between min-h-[500px]">
-            <div>
-              {/* Header controls inside card table */}
-              <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 px-4">
-                <div>
-                  <h3 className="font-poppins font-semibold text-2xl text-black">
-                    Graduating Students
+            ) : (
+              /* Audit Logs Tab */
+              <div>
+                <div className="mb-6 px-2">
+                  <h3 className="font-poppins font-semibold text-xl text-slate-800">
+                    System Audit Logs
                   </h3>
-                  <span className="text-xs text-[#16C098] font-poppins font-normal">
-                    Student database
+                  <span className="text-xs text-[#00A65A] font-poppins font-semibold">
+                    Append-only immutable transaction entries
                   </span>
                 </div>
 
-                {/* Search & Sort Widgets */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                  {/* Search control */}
-                  <div className="relative w-full md:w-64">
-                    <Search className="w-5 h-5 text-[#B5B7C0] absolute left-3 top-2.5" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search Student name or Matric"
-                      className="w-full bg-[#F9FBFF] border border-none rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#292D32] focus:outline-none focus:ring-2 focus:ring-[#5932EA] transition-all font-poppins"
-                    />
-                  </div>
-
-                  {/* Filter status dropdown */}
-                  <div className="relative w-full sm:w-auto">
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="bg-[#F9FBFF] border border-[#EEEEEE] rounded-xl px-4 py-2 text-xs text-[#7E7E7E] focus:outline-none focus:ring-2 focus:ring-[#5932EA] transition-all font-poppins cursor-pointer w-full"
-                    >
-                      <option value="all">Sort by : All</option>
-                      <option value="cleared">Fully Cleared</option>
-                      <option value="pending">Review Pending</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Table layout container */}
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#EEEEEE] text-left text-xs font-semibold text-[#B5B7C0] font-poppins">
-                      <th className="py-4 px-6">Graduating Student</th>
-                      <th className="py-4 px-6">Department</th>
-                      <th className="py-4 px-6">Faculty</th>
-                      <th className="py-4 px-6 text-center">Clearance Status</th>
-                      <th className="py-4 px-6 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#EEEEEE] font-poppins text-xs font-medium text-[#292D32]">
-                    {filteredStudents.length > 0 ? (
-                      filteredStudents.map((stud) => {
-                        const style = getOverallStatusStyle(stud);
-                        return (
-                          <tr key={stud.userId} className="hover:bg-[#FAFBFF] transition-all group">
-                            <td className="py-4 px-6">
-                              <span className="block font-semibold text-sm text-black">
-                                {stud.user.name}
+                <div className="overflow-x-auto rounded-lg border border-slate-100">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold text-slate-400 font-poppins">
+                        <th className="py-3 px-4">Timestamp</th>
+                        <th className="py-3 px-4">Actor Details</th>
+                        <th className="py-3 px-4">Action</th>
+                        <th className="py-3 px-4">Description / Entity</th>
+                        <th className="py-3 px-4">Metadata</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-poppins text-xs font-medium text-[#292D32]">
+                      {auditLogs.length > 0 ? (
+                        auditLogs.map((log) => (
+                          <tr key={log.id} className="hover:bg-slate-50/55 transition-all text-[11px]">
+                            <td className="py-3 px-4 text-slate-500 whitespace-nowrap">
+                              {new Date(log.timestamp).toLocaleString()}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="block font-semibold text-slate-800">
+                                {log.actor?.name || "System Process"}
                               </span>
-                              <span className="block text-[10px] text-[#9197B3]">
-                                {stud.matricNumber} / {stud.user.email}
+                              <span className="block text-[9px] text-slate-400">
+                                Role: {log.actorRole}
                               </span>
                             </td>
-                            <td className="py-4 px-6 text-[#7E7E7E]">
-                              {stud.department}
+                            <td className="py-3 px-4 font-mono text-[10px] font-bold text-blue-700 uppercase">
+                              {log.action}
                             </td>
-                            <td className="py-4 px-6 text-[#7E7E7E]">
-                              {stud.faculty}
+                            <td className="py-3 px-4 text-slate-500">
+                              {log.entityType} ({log.entityId?.substring(0, 8)}...)
                             </td>
-                            <td className="py-4 px-6 text-center">
-                              <span className={`inline-block border rounded px-3 py-1.5 text-xs font-semibold ${style.bg} ${style.border} ${style.text} w-36 text-center`}>
-                                {style.label}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 text-center">
-                              <button
-                                onClick={() => setSelectedStudent(stud)}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-[#5932EA] hover:bg-[#4623E9] border border-[#5932EA] rounded-lg px-3.5 py-2.5 transition-all shadow-md cursor-pointer"
-                              >
-                                <Eye className="w-3.5 h-3.5" /> View Progress
-                              </button>
+                            <td className="py-3 px-4 max-w-[150px] truncate text-[9px] text-slate-500 bg-slate-50 font-mono" title={JSON.stringify(log.metadata)}>
+                              {JSON.stringify(log.metadata)}
                             </td>
                           </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan={5} className="py-12 px-6 text-center text-[#B5B7C0]">
-                          No students found matching search filters.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Footer paging */}
-            <div className="flex justify-between items-center mt-8 px-4 font-poppins text-xs font-semibold">
-              <span className="text-[#B5B7C0]">
-                Showing {filteredStudents.length} of {students.length} entries
-              </span>
-              <div className="flex items-center gap-2">
-                <button className="flex items-center justify-center w-6 h-6 border border-[#EEEEEE] bg-[#F5F5F5] rounded text-[#404B52] disabled:opacity-50" disabled>
-                  &lt;
-                </button>
-                <button className="flex items-center justify-center w-6 h-6 border border-[#5932EA] bg-[#5932EA] rounded text-white font-bold">
-                  1
-                </button>
-                <button className="flex items-center justify-center w-6 h-6 border border-[#EEEEEE] bg-[#F5F5F5] rounded text-[#404B52] disabled:opacity-50" disabled>
-                  &gt;
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Audit Logs list viewer */
-          <div className="bg-white py-8 px-6 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.5)] border border-[#F0F4FA] flex-1 flex flex-col justify-between min-h-[500px]">
-            <div>
-              <div className="mb-6 px-4">
-                <h3 className="font-poppins font-semibold text-2xl text-black">
-                  System Audit Logs
-                </h3>
-                <span className="text-xs text-[#16C098] font-poppins font-normal">
-                  Append-only immutable transaction entries
-                </span>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#EEEEEE] text-left text-xs font-semibold text-[#B5B7C0] font-poppins">
-                      <th className="py-4 px-6">Timestamp</th>
-                      <th className="py-4 px-6">Actor Details</th>
-                      <th className="py-4 px-6">Action</th>
-                      <th className="py-4 px-6">Description / Entity</th>
-                      <th className="py-4 px-6">Metadata</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#EEEEEE] font-poppins text-xs font-medium text-[#292D32]">
-                    {auditLogs.length > 0 ? (
-                      auditLogs.map((log) => (
-                        <tr key={log.id} className="hover:bg-[#FAFBFF] transition-all">
-                          <td className="py-4 px-6 text-[#7E7E7E]">
-                            {new Date(log.timestamp).toLocaleString()}
-                          </td>
-                          <td className="py-4 px-6">
-                            <span className="block font-semibold text-black">
-                              {log.actor?.name || "System Process"}
-                            </span>
-                            <span className="block text-[10px] text-[#9197B3]">
-                              Role: {log.actorRole}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 font-mono text-xs font-bold text-indigo-700">
-                            {log.action}
-                          </td>
-                          <td className="py-4 px-6 text-[#7E7E7E]">
-                            {log.entityType} ({log.entityId?.substring(0, 8)}...)
-                          </td>
-                          <td className="py-4 px-6 max-w-xs truncate text-[10px] text-zinc-500 bg-zinc-50" title={JSON.stringify(log.metadata)}>
-                            {JSON.stringify(log.metadata)}
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="py-12 px-4 text-center text-slate-400">
+                            No audit log transactions registered yet.
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={5} className="py-12 px-6 text-center text-[#B5B7C0]">
-                          No audit log transactions registered yet.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Admin Info Card Sidebar Panel (4 columns on lg) */}
+          <div className="lg:col-span-4 flex flex-col gap-6 w-full">
+            
+            {/* Admin Profile Card (Blue top border) */}
+            <div className="border-t-4 border-[#3482B9] bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col items-center justify-center text-center font-poppins">
+              <div className="w-24 h-24 rounded-lg border-2 border-slate-200 bg-slate-50 overflow-hidden mb-4 flex items-center justify-center relative shadow-inner">
+                <div className="w-full h-full bg-slate-100 flex items-center justify-center font-extrabold text-slate-400 text-3xl uppercase">
+                  {user.name.charAt(0)}
+                </div>
+              </div>
+              <h3 className="font-bold text-slate-800 text-base mb-1">{user.name}</h3>
+              <div className="px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 mb-4 select-all">
+                Administrator
+              </div>
+
+              {/* Extra profile details */}
+              <div className="w-full border-t border-slate-100 pt-4 mt-2 space-y-2.5 text-left text-xs text-slate-500 font-medium">
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Assigned Role:</span>
+                  <span className="font-bold text-slate-700 text-right">{user.role}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Institutional Email:</span>
+                  <span className="font-bold text-slate-700 text-right max-w-[130px] truncate" title={user.email}>{user.email}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">System Logs Cache:</span>
+                  <span className="font-bold text-slate-700 text-right font-mono text-[10px]">{auditLogs.length} Records</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Status bypass:</span>
+                  <span className="font-bold text-green-700 text-right text-xs uppercase tracking-wider">ACTIVE</span>
+                </div>
               </div>
             </div>
+
           </div>
-        )}
+
+        </div>
+
       </main>
 
       {/* 5. Student Progress Detail / Override Modal */}
       {selectedStudent && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40 p-4 transition-all">
-          <div className="bg-white w-full max-w-2xl rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.9)] border border-[#F0F4FA] p-8 flex flex-col gap-6 relative max-h-[85vh] overflow-y-auto">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 p-8 flex flex-col gap-6 relative max-h-[85vh] overflow-y-auto font-poppins">
             <button 
               onClick={() => setSelectedStudent(null)}
-              className="absolute right-6 top-6 text-[#9197B3] hover:text-black transition-colors cursor-pointer"
+              className="absolute right-6 top-6 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-6 h-6" />
             </button>
 
             <div>
-              <h3 className="font-poppins font-semibold text-2xl text-black">
+              <h3 className="font-semibold text-xl text-slate-800">
                 {selectedStudent.user.name}
               </h3>
-              <p className="text-xs text-[#9197B3] font-poppins mt-1">
+              <p className="text-xs text-slate-450 mt-1 leading-relaxed">
                 Matric: {selectedStudent.matricNumber} / Dept: {selectedStudent.department} / Faculty: {selectedStudent.faculty}
               </p>
             </div>
 
-            {/* Clearance Request Status List */}
             <div className="space-y-4">
-              <span className="block text-xs font-semibold text-[#9197B3] uppercase tracking-wider mb-2">
+              <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
                 Requirements Checklist
               </span>
-              <div className="divide-y divide-[#EEEEEE] border border-[#EEEEEE] rounded-2xl overflow-hidden bg-[#FAFBFF]">
+              
+              <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden">
                 {selectedStudent.clearanceRequests.map((req) => (
-                  <div key={req.id} className="flex items-center justify-between p-4 bg-white hover:bg-[#FAFBFF] transition-all">
+                  <div key={req.id} className="flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-all">
                     <div>
-                      <span className="block font-semibold text-sm text-black">
+                      <span className="block font-semibold text-xs text-slate-800">
                         {req.clearingUnit.name}
                       </span>
                     </div>
@@ -706,7 +705,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                       {user.role === "ADMIN" && (
                         <button
                           onClick={() => setOverrideRequest({ id: req.id, unitName: req.clearingUnit.name, currentStatus: req.status })}
-                          className="px-2.5 py-1.5 bg-zinc-100 hover:bg-indigo-50 border border-zinc-200 hover:border-[#5932EA] rounded-lg text-[10px] font-bold text-[#9197B3] hover:text-[#5932EA] transition-all cursor-pointer"
+                          className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-350 hover:border-[#3482B9] text-slate-500 hover:text-[#3482B9] rounded-xl text-[10px] font-bold transition-all cursor-pointer"
                         >
                           Override
                         </button>
@@ -723,23 +722,23 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
       {/* 6. Admin Override Modal */}
       {overrideRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 transition-all">
-          <div className="bg-white w-full max-w-md rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.9)] border border-[#F0F4FA] p-8 flex flex-col gap-6 relative">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 p-8 flex flex-col gap-6 relative">
             <button 
               onClick={() => { setOverrideRequest(null); setOverrideNote(""); }}
-              className="absolute right-6 top-6 text-[#9197B3] hover:text-black transition-colors cursor-pointer"
+              className="absolute right-6 top-6 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-6 h-6" />
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-[#5932EA]">
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-[#3482B9]">
                 <Settings className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-poppins font-semibold text-lg text-black">
-                  Manual Status Override
+                <h3 className="font-poppins font-semibold text-lg text-slate-800">
+                  Manual Override
                 </h3>
-                <p className="text-xs text-[#9197B3] font-poppins">
+                <p className="text-xs text-slate-450 font-poppins">
                   Office: {overrideRequest.unitName} (Current: {overrideRequest.currentStatus})
                 </p>
               </div>
@@ -747,7 +746,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
 
             <form className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#9197B3] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                   Override Justification (Required)
                 </label>
                 <textarea
@@ -756,7 +755,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                   value={overrideNote}
                   onChange={(e) => setOverrideNote(e.target.value)}
                   placeholder="State the administrative reason for this manual clearance override."
-                  className="block w-full px-4 py-3 border border-[#EEEEEE] rounded-xl bg-[#FAFBFF] text-[#292D32] placeholder-[#B5B7C0] focus:outline-none focus:ring-2 focus:ring-[#5932EA] focus:border-transparent transition-all text-xs resize-none font-poppins font-medium leading-relaxed"
+                  className="block w-full px-4 py-3 border border-slate-205 rounded-xl bg-slate-50 text-[#292D32] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3482B9] focus:border-transparent transition-all text-xs resize-none font-poppins font-medium leading-relaxed"
                 />
               </div>
 
@@ -765,7 +764,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                   type="button"
                   onClick={(e) => handleOverrideSubmit(e, "APPROVED")}
                   disabled={overrideLoading || !overrideNote.trim()}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl text-xs font-semibold text-white bg-[#00B087] hover:bg-[#008767] focus:outline-none shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-xl text-xs font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {overrideLoading ? (
                     <Loader2 className="animate-spin h-4 w-4" />
@@ -777,7 +776,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                   type="button"
                   onClick={(e) => handleOverrideSubmit(e, "REJECTED")}
                   disabled={overrideLoading || !overrideNote.trim()}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl text-xs font-semibold text-white bg-[#DF0404] hover:bg-red-700 focus:outline-none shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-xl text-xs font-semibold text-white bg-red-650 hover:bg-red-700 focus:outline-none shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {overrideLoading ? (
                     <Loader2 className="animate-spin h-4 w-4" />

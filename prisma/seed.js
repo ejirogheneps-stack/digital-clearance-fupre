@@ -32,20 +32,28 @@ async function main() {
 
   console.log("Database cleaned.");
 
-  // 2. Define standard FUPRE Clearing Units
+  // 2. Define standard FUPRE Clearing Units in Sequential Order
   const unitsData = [
-    { name: "University Library", description: "Verifies returned library books, fine clearances, and cards surrender." },
-    { name: "Bursary Department", description: "Verifies complete tuition payment, hostel fees, and other school dues." },
-    { name: "Academic Department", description: "Verifies final-year project submission, department book returns, and course results." },
-    { name: "Student Affairs", description: "Verifies hostel room vacation, code of conduct clearance, and ID card surrender." },
-    { name: "ICT Unit", description: "Verifies institutional email sign-off and portal access status." },
-    { name: "Registrar Office", description: "Verifies credentials against admission file and issues final NYSC mobilisation clearance." },
+    { name: "Head of Department", sortOrder: 1, description: "Verifies final-year project submission, department book returns, and course results." },
+    { name: "College Office", sortOrder: 2, description: "College of Science/Technology/Engineering clearance verification." },
+    { name: "Admissions Office", sortOrder: 3, description: "Verifies student credentials against physical admission file." },
+    { name: "Bursary Department", sortOrder: 4, description: "Verifies complete tuition payment, hostel fees, and school dues." },
+    { name: "University Library", sortOrder: 5, description: "Verifies returned library books, fine clearances, and cards surrender." },
+    { name: "Sports Council", sortOrder: 6, description: "Verifies sports equipment return and athletic clearances." },
+    { name: "University Health Centre", sortOrder: 7, description: "Verifies medical files, student health records, and clinic clearances." },
+    { name: "Security Department", sortOrder: 8, description: "Verifies ID card validation and security clearance registry check." },
+    { name: "Student Affairs", sortOrder: 9, description: "Verifies hostel room vacation, code of conduct, and student body dues." },
+    { name: "Exams and Records / Alumni", sortOrder: 10, description: "Verifies academic records, transcript audit, and alumni registration." }
   ];
 
   const units = {};
   for (const unit of unitsData) {
     const record = await prisma.clearingUnit.create({
-      data: unit,
+      data: {
+        name: unit.name,
+        sortOrder: unit.sortOrder,
+        description: unit.description,
+      },
     });
     units[unit.name] = record;
   }
@@ -77,13 +85,25 @@ async function main() {
   });
   console.log("Created Registrar account:", registrarUser.email);
 
-  // 5. Create Staff Accounts
+  // 5. Create Staff Accounts for all 10 clearing units
   const staffConfigs = [
     {
-      name: "Library Officer",
-      email: "library_staff@fupre.edu.ng",
-      password: "librarypassword",
-      unitName: "University Library",
+      name: "Academic Head of Department",
+      email: "academic_staff@fupre.edu.ng",
+      password: "academicpassword",
+      unitName: "Head of Department",
+    },
+    {
+      name: "College Officer",
+      email: "college_staff@fupre.edu.ng",
+      password: "collegepassword",
+      unitName: "College Office",
+    },
+    {
+      name: "Admissions Officer",
+      email: "admissions_staff@fupre.edu.ng",
+      password: "admissionspassword",
+      unitName: "Admissions Office",
     },
     {
       name: "Bursary Officer",
@@ -92,16 +112,40 @@ async function main() {
       unitName: "Bursary Department",
     },
     {
-      name: "Academic Head of Department",
-      email: "academic_staff@fupre.edu.ng",
-      password: "academicpassword",
-      unitName: "Academic Department",
+      name: "Library Officer",
+      email: "library_staff@fupre.edu.ng",
+      password: "librarypassword",
+      unitName: "University Library",
+    },
+    {
+      name: "Sports Officer",
+      email: "sports_staff@fupre.edu.ng",
+      password: "sportspassword",
+      unitName: "Sports Council",
+    },
+    {
+      name: "Health Center Officer",
+      email: "health_staff@fupre.edu.ng",
+      password: "healthpassword",
+      unitName: "University Health Centre",
+    },
+    {
+      name: "Security Officer",
+      email: "security_staff@fupre.edu.ng",
+      password: "securitypassword",
+      unitName: "Security Department",
     },
     {
       name: "Student Affairs Officer",
       email: "sa_staff@fupre.edu.ng",
       password: "sapassword",
       unitName: "Student Affairs",
+    },
+    {
+      name: "Exams and Records Officer",
+      email: "exams_staff@fupre.edu.ng",
+      password: "examspassword",
+      unitName: "Exams and Records / Alumni",
     },
   ];
 

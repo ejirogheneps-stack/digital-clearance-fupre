@@ -19,7 +19,9 @@ import {
   RefreshCw,
   Search,
   Database,
-  FileCheck
+  FileCheck,
+  LayoutDashboard,
+  Smile
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -35,15 +37,15 @@ export default function LandingPage() {
   const [hasherOutput, setHasherOutput] = useState("");
 
   // Interactive Clearance Simulator State
-  const [selectedOffice, setSelectedOffice] = useState("Library");
+  const [selectedOffice, setSelectedOffice] = useState("HOD");
   const [simFileName, setSimFileName] = useState("");
   const [simStep, setSimStep] = useState<"idle" | "uploading" | "hashing" | "verifying" | "cleared" | "failed">("idle");
   const [simProgress, setSimProgress] = useState(0);
   const [simHash, setSimHash] = useState("");
   const [clearedOffices, setClearedOffices] = useState({
-    Library: false,
-    Bursary: false,
-    Affairs: false,
+    HOD: false,
+    College: false,
+    Admissions: false,
   });
   const [showMockCertificate, setShowMockCertificate] = useState(false);
 
@@ -91,14 +93,16 @@ export default function LandingPage() {
   };
 
   // Run mock clearance simulator steps
-  const startSimulation = () => {
+  const startSimulation = (office?: string) => {
     if (simStep !== "idle" && simStep !== "cleared") return;
+    const targetOffice = office || selectedOffice;
+    setSelectedOffice(targetOffice);
     
     setSimProgress(0);
     setSimStep("uploading");
     setSimFileName(
-      selectedOffice === "Library" ? "library_returns_receipt.pdf" :
-      selectedOffice === "Bursary" ? "tuition_fees_clearance.pdf" : "student_id_surrender.pdf"
+      targetOffice === "HOD" ? "hod_project_approval.pdf" :
+      targetOffice === "College" ? "college_result_verification.pdf" : "admission_letter_file.pdf"
     );
 
     // Step 1: Simulated Upload
@@ -119,8 +123,8 @@ export default function LandingPage() {
           setTimeout(() => {
             setSimStep("cleared");
             setClearedOffices(prev => {
-              const updated = { ...prev, [selectedOffice]: true };
-              if (updated.Library && updated.Bursary && updated.Affairs) {
+              const updated = { ...prev, [targetOffice]: true };
+              if (updated.HOD && updated.College && updated.Admissions) {
                 setShowMockCertificate(true);
               }
               return updated;
@@ -136,77 +140,83 @@ export default function LandingPage() {
     setSimProgress(0);
     setSimFileName("");
     setSimHash("");
-    setClearedOffices({ Library: false, Bursary: false, Affairs: false });
+    setClearedOffices({ HOD: false, College: false, Admissions: false });
     setShowMockCertificate(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] flex flex-col font-sans selection:bg-[#5932EA] selection:text-white relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] flex flex-col font-sans selection:bg-[#3482B9] selection:text-white relative overflow-hidden">
       
       {/* Background radial glow meshes */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[15%] -left-[10%] w-[600px] h-[600px] rounded-full bg-[#EAABF0] opacity-15 blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute top-[35%] right-[-10%] w-[650px] h-[650px] rounded-full bg-[#4623E9] opacity-10 blur-[160px] animate-pulse-slow"></div>
-        <div className="absolute top-[70%] left-[5%] w-[500px] h-[500px] rounded-full bg-[#8B5CF6] opacity-5 blur-[130px]"></div>
+        <div className="absolute top-[35%] right-[-10%] w-[650px] h-[650px] rounded-full bg-[#3482B9]/10 opacity-15 blur-[160px] animate-pulse-slow"></div>
+        <div className="absolute top-[70%] left-[5%] w-[500px] h-[500px] rounded-full bg-[#3482B9]/5 blur-[130px]"></div>
       </div>
 
-      {/* 1. Header Navigation */}
-      <header className="bg-white/70 backdrop-blur-lg border-b border-[#E2E8F0] sticky top-0 z-50 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
-          
-          {/* Logo */}
-          <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => router.push("/")}>
+      {/* 1. Dual-Tier Navigation Header */}
+      <header className="sticky top-0 z-50 shadow-md">
+        {/* Tier 1: White logo header banner */}
+        <div className="bg-white h-16 px-4 sm:px-6 md:px-8 flex items-center justify-between border-b border-slate-200">
+          <div className="flex items-center gap-3">
             <img 
               src="/fupre_logo.png" 
               alt="FUPRE Logo" 
-              className="w-10 h-10 object-contain transition-transform group-hover:scale-105 duration-300"
+              className="w-10 h-10 object-contain shrink-0"
             />
-            <div>
-              <span className="font-poppins font-bold text-lg text-slate-900 tracking-tight">FUPRE DSCS</span>
-              <span className="block text-[9px] text-[#5932EA] uppercase tracking-wider font-bold -mt-1">Digital Clearance</span>
+            <div className="text-left font-poppins">
+              <h1 className="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight tracking-tight uppercase">
+                Federal University of
+              </h1>
+              <h1 className="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight tracking-tight uppercase">
+                Petroleum Resources, Effurun
+              </h1>
+              <span className="block font-bold text-red-800 text-[8px] sm:text-[9px] tracking-wider uppercase mt-0.5">
+                Excellence and Relevance
+              </span>
             </div>
           </div>
+          <div className="hidden md:block text-slate-400 font-poppins text-xs font-bold uppercase tracking-wider">
+            Digital Student Clearance System
+          </div>
+        </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8 font-poppins text-xs font-semibold text-slate-500">
-            <button onClick={() => handleScrollTo("features")} className="hover:text-[#5932EA] transition-colors cursor-pointer">Platform Features</button>
-            <button onClick={() => handleScrollTo("workflow")} className="hover:text-[#5932EA] transition-colors cursor-pointer">Clearance Steps</button>
-            <button onClick={() => handleScrollTo("faq")} className="hover:text-[#5932EA] transition-colors cursor-pointer">Support FAQ</button>
+        {/* Tier 2: Blue Navigation Bar */}
+        <div className="bg-[#3482B9] h-12 px-4 sm:px-6 md:px-8 flex items-center justify-between text-white shadow-inner">
+          {/* Nav Links */}
+          <nav className="hidden md:flex items-center gap-6 font-poppins text-xs font-bold">
+            <button onClick={() => handleScrollTo("features")} className="hover:text-white/80 transition-colors cursor-pointer">Platform Features</button>
+            <button onClick={() => handleScrollTo("workflow")} className="hover:text-white/80 transition-colors cursor-pointer">Clearance Steps</button>
+            <button onClick={() => handleScrollTo("faq")} className="hover:text-white/80 transition-colors cursor-pointer">Support FAQ</button>
           </nav>
 
+          {/* Mobile Menu Icon */}
+          <button 
+            className="md:hidden text-white hover:text-white/80 cursor-pointer p-1"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
           {/* Action Button */}
-          <div className="hidden md:block">
+          <div>
             <button
               onClick={handleStart}
-              className="relative inline-flex items-center gap-2 py-2.5 px-6 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-md transition-all cursor-pointer hover:shadow-lg hover:-translate-y-[1px] active:translate-y-0 overflow-hidden"
+              className="inline-flex items-center gap-1.5 py-1.5 px-4 rounded-xl text-xs font-bold text-white bg-[#2a6996] hover:bg-[#205175] border border-white/20 transition-all cursor-pointer shadow-sm hover:shadow-md"
             >
               {isAuthenticated ? "Enter Dashboard" : "Sign In Portal"}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-
-          {/* Mobile Menu Icon */}
-          <button 
-            className="md:hidden text-slate-800 hover:text-[#5932EA] cursor-pointer"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
       </header>
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-[#E2E8F0] p-6 space-y-4 font-poppins text-sm font-semibold text-slate-500 flex flex-col absolute top-20 left-0 w-full z-40 shadow-xl animate-in slide-in-from-top-5 duration-200">
-          <button onClick={() => handleScrollTo("features")} className="text-left py-2 hover:text-[#5932EA] cursor-pointer">Platform Features</button>
-          <button onClick={() => handleScrollTo("workflow")} className="text-left py-2 hover:text-[#5932EA] cursor-pointer">Clearance Steps</button>
-          <button onClick={() => handleScrollTo("faq")} className="text-left py-2 hover:text-[#5932EA] cursor-pointer">Support FAQ</button>
-          <button 
-            onClick={handleStart}
-            className="flex items-center justify-center gap-2 py-3 w-full border border-transparent rounded-xl text-sm font-bold text-white bg-[#5932EA] hover:bg-[#4623E9] transition-all cursor-pointer shadow-lg shadow-[rgba(89,50,234,0.15)]"
-          >
-            {isAuthenticated ? "Go to Dashboard" : "Sign In Portal"}
-          </button>
+        <div className="md:hidden bg-white border-b border-slate-200 p-6 space-y-4 font-poppins text-sm font-semibold text-slate-500 flex flex-col absolute top-28 left-0 w-full z-40 shadow-xl animate-in slide-in-from-top-5 duration-200">
+          <button onClick={() => { handleScrollTo("features"); setMobileMenuOpen(false); }} className="text-left py-2 hover:text-[#3482B9] cursor-pointer">Platform Features</button>
+          <button onClick={() => { handleScrollTo("workflow"); setMobileMenuOpen(false); }} className="text-left py-2 hover:text-[#3482B9] cursor-pointer">Clearance Steps</button>
+          <button onClick={() => { handleScrollTo("faq"); setMobileMenuOpen(false); }} className="text-left py-2 hover:text-[#3482B9] cursor-pointer">Support FAQ</button>
         </div>
       )}
 
@@ -215,13 +225,13 @@ export default function LandingPage() {
         
         {/* Left Hero Context */}
         <div className="lg:col-span-7 flex flex-col items-start gap-6 text-left animate-fade-in">
-          <div className="inline-flex items-center gap-2 bg-[#5932EA]/10 border border-[#5932EA]/20 rounded-full py-1.5 px-4 text-[11px] font-bold text-[#5932EA]">
+          <div className="inline-flex items-center gap-2 bg-[#3482B9]/10 border border-[#3482B9]/20 rounded-full py-1.5 px-4 text-[11px] font-bold text-[#3482B9]">
             <GraduationCap className="w-4 h-4" /> Official FUPRE Graduation Portal
           </div>
           
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.08] font-poppins">
             Clearance processes,{" "}
-            <span className="bg-gradient-to-r from-[#5932EA] via-[#8B5CF6] to-[#4623E9] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#3482B9] via-[#5da1d1] to-[#2a6996] bg-clip-text text-transparent">
               fully automated.
             </span>
           </h1>
@@ -233,7 +243,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-2">
             <button
               onClick={handleStart}
-              className="flex items-center justify-center gap-2 py-3.5 px-8 rounded-2xl text-xs font-bold text-white bg-shimmer shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all cursor-pointer hover:translate-y-[-1px]"
+              className="flex items-center justify-center gap-2 py-3.5 px-8 rounded-2xl text-xs font-bold text-white bg-shimmer shadow-lg shadow-blue-500/20 hover:shadow-xl transition-all cursor-pointer hover:translate-y-[-1px]"
             >
               Get Started Now <ArrowRight className="w-4 h-4" />
             </button>
@@ -264,189 +274,232 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Right - Interactive Portal Simulator */}
+        {/* Right - Interactive Portal Simulator (Redesigned to mimic exact visual language of dashboard) */}
         <div className="lg:col-span-5 relative w-full flex justify-center animate-float">
-          <div className="bg-white border border-slate-100 rounded-[28px] shadow-[0px_25px_60px_rgba(226,236,249,0.7)] p-6 w-full max-w-[440px] relative overflow-hidden font-poppins">
+          <div className="bg-slate-200 border border-slate-300 rounded-2xl shadow-[0px_20px_50px_rgba(15,32,66,0.15)] w-full max-w-[440px] relative overflow-hidden font-poppins flex flex-col min-h-[580px]">
             
-            {/* Custom decorative dots */}
-            <div className="absolute top-4 right-4 flex gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-100"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-100"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-100"></span>
-            </div>
-
-            {/* Portal Header */}
-            <div className="pb-4 border-b border-slate-100 mb-5 flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DSCS SIMULATOR</span>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="w-7 h-7 bg-[#5932EA]/10 text-[#5932EA] rounded-lg flex items-center justify-center shrink-0">
-                  <GraduationCap className="w-4 h-4" />
+            {/* 1. Mini Dual-Tier Header */}
+            <div className="shrink-0 shadow-sm border-b border-slate-200">
+              {/* Tier 1 logo bar */}
+              <div className="bg-white h-10 px-3 flex items-center gap-2">
+                <img 
+                  src="/fupre_logo.png" 
+                  alt="FUPRE Logo" 
+                  className="w-6 h-6 object-contain shrink-0"
+                />
+                <div className="text-left font-poppins scale-[0.85] origin-left">
+                  <h1 className="font-bold text-slate-800 text-[9px] leading-none uppercase">
+                    Federal University of
+                  </h1>
+                  <h1 className="font-bold text-slate-800 text-[9px] leading-none uppercase mt-0.5">
+                    Petroleum Resources, Effurun
+                  </h1>
                 </div>
-                <span className="font-bold text-slate-800 text-xs">Clearance Dashboard</span>
+              </div>
+              {/* Tier 2 sub-header */}
+              <div className="bg-[#3482B9] h-8 px-3 flex items-center justify-between text-white text-[10px]">
+                <Menu className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-5 rounded-full border border-white overflow-hidden bg-slate-200 flex items-center justify-center font-bold text-slate-800 text-[9px]">
+                    S
+                  </div>
+                  <ChevronDown className="w-3 h-3" />
+                </div>
               </div>
             </div>
 
-            {/* Mock Dashboard Tabs */}
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-50 rounded-xl mb-5">
-              {["Library", "Bursary", "Affairs"].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => { setSelectedOffice(tab); if(simStep === 'cleared') resetSimulation(); }}
-                  className={`py-1.5 px-2 rounded-lg text-[10px] font-bold transition-all cursor-pointer text-center ${
-                    selectedOffice === tab 
-                      ? "bg-white text-[#5932EA] shadow-xs" 
-                      : "text-slate-400 hover:text-slate-600"
-                  }`}
-                >
-                  {tab === "Affairs" ? "Student Affairs" : tab}
-                </button>
-              ))}
-            </div>
-
-            {/* Simulator screen content */}
-            <div className="min-h-[160px] flex flex-col justify-center bg-slate-50/50 rounded-2xl border border-slate-100 p-4 relative">
-              {simStep === "idle" && (
-                <div className="flex flex-col items-center justify-center text-center gap-3 py-4">
-                  <div className="w-10 h-10 rounded-full bg-white border border-slate-200/60 shadow-xs flex items-center justify-center text-slate-400 animate-pulse">
-                    <Upload className="w-4.5 h-4.5" />
-                  </div>
-                  <div>
-                    <span className="block text-[11px] font-bold text-slate-700">Simulate Document Submission</span>
-                    <span className="block text-[9px] text-slate-400 mt-1 max-w-[200px]">
-                      Test how the system verifies upload integrity for {selectedOffice}
-                    </span>
-                  </div>
-                  <button
-                    onClick={startSimulation}
-                    className="py-1.5 px-4 bg-[#5932EA] hover:bg-[#4623E9] text-white text-[10px] font-bold rounded-lg transition-all shadow-xs cursor-pointer mt-1"
-                  >
-                    Start Upload Simulation
-                  </button>
-                </div>
-              )}
-
-              {/* Uploading Progress */}
-              {simStep === "uploading" && (
-                <div className="flex flex-col gap-3 py-3">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-600">
-                    <span className="flex items-center gap-1.5 truncate max-w-[150px]">
-                      <FileText className="w-3.5 h-3.5 text-[#5932EA]" /> {simFileName}
-                    </span>
-                    <span>{simProgress}%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-[#5932EA] h-1.5 rounded-full transition-all duration-150" style={{ width: `${simProgress}%` }}></div>
-                  </div>
-                  <span className="text-[9px] font-semibold text-slate-400">Uploading verification data package...</span>
-                </div>
-              )}
-
-              {/* Hashing Step */}
-              {simStep === "hashing" && (
-                <div className="flex flex-col items-center justify-center text-center gap-3 py-3">
-                  <RefreshCw className="w-6 h-6 text-[#5932EA] animate-spin" />
-                  <div>
-                    <span className="block text-[11px] font-bold text-slate-700">Client-Side Verification</span>
-                    <span className="block text-[9px] text-[#5932EA] mt-1 font-semibold">Generating SHA-256 local checksum...</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Server verification step */}
-              {simStep === "verifying" && (
-                <div className="flex flex-col gap-2.5 py-2 text-[10px]">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-600">Checksum Generated</span>
-                    <span className="font-mono text-[8px] bg-slate-100 text-slate-500 py-0.5 px-1.5 rounded truncate max-w-[150px]">
-                      {simHash}
-                    </span>
-                  </div>
-                  <div className="w-full h-px bg-slate-100"></div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#5932EA] animate-ping"></span>
-                    <span className="font-bold text-slate-600">Checking against Office Registry...</span>
-                  </div>
-                  <span className="text-[9px] text-slate-400">Comparing cryptographic signature with server records...</span>
-                </div>
-              )}
-
-              {/* Cleared state */}
-              {simStep === "cleared" && (
-                <div className="flex flex-col items-center justify-center text-center gap-2.5 py-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#00AC4F] animate-bounce">
-                    <CheckCircle className="w-5.5 h-5.5" />
-                  </div>
-                  <div>
-                    <span className="block text-[11px] font-bold text-emerald-800">Clearance Approved!</span>
-                    <span className="block text-[9px] text-slate-400 mt-1">
-                      Verification files matched. {selectedOffice} cleared.
-                    </span>
-                  </div>
-                  <button
-                    onClick={resetSimulation}
-                    className="text-[9px] font-bold text-[#5932EA] hover:underline cursor-pointer"
-                  >
-                    Reset & Try Another Office
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Checklist items representing current approval states */}
-            <div className="mt-5 space-y-2 border-t border-slate-100 pt-4 text-[10px]">
-              <span className="block font-bold text-slate-400 uppercase tracking-widest text-[9px] mb-2.5">
-                Approval Checklist
-              </span>
+            {/* 2. Mini Content Area */}
+            <div className="p-4 flex-1 flex flex-col gap-4 bg-slate-50">
               
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-600">University Library</span>
-                <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] ${
-                  clearedOffices.Library 
-                    ? "bg-emerald-50 text-[#008767]" 
-                    : "bg-slate-50 text-slate-400 border border-slate-100"
-                }`}>
-                  {clearedOffices.Library ? "Approved" : "Pending Demo"}
-                </span>
+              {/* Speedometer Breadcrumbs */}
+              <div className="flex flex-col gap-1">
+                <span className="font-bold text-slate-800 text-sm">Dashboard</span>
+                <div className="bg-[#E2E8F0] px-2.5 py-1.5 rounded-md text-[9px] font-bold text-slate-600 flex items-center gap-1.5 border border-slate-200">
+                  <LayoutDashboard className="w-3 h-3 text-slate-500 shrink-0" />
+                  <span>Home</span>
+                  <span className="text-slate-400 font-normal">&gt;</span>
+                  <span className="text-slate-500 font-normal">Dashboard</span>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-600">Bursary Department</span>
-                <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] ${
-                  clearedOffices.Bursary 
-                    ? "bg-emerald-50 text-[#008767]" 
-                    : "bg-slate-50 text-slate-400 border border-slate-100"
-                }`}>
-                  {clearedOffices.Bursary ? "Approved" : "Pending Demo"}
-                </span>
+              {/* Grid of Mini Stat Cards */}
+              <div className="grid grid-cols-2 gap-2 text-[10px] font-poppins">
+                {/* Green Card */}
+                <div className="bg-[#00A65A] text-white rounded-lg shadow-xs overflow-hidden flex flex-col justify-between h-[65px]">
+                  <div className="p-2">
+                    <span className="block font-bold text-base leading-none">
+                      {3 - (clearedOffices.HOD ? 1 : 0) - (clearedOffices.College ? 1 : 0) - (clearedOffices.Admissions ? 1 : 0)}
+                    </span>
+                    <span className="text-[7px] font-bold uppercase tracking-wider opacity-90 block mt-1">Pending</span>
+                  </div>
+                  <div className="bg-[#008d4c] py-0.5 text-center text-[7px] font-semibold text-white/90 font-poppins">
+                    More info
+                  </div>
+                </div>
+
+                {/* Orange Card */}
+                <div className="bg-[#F39C12] text-white rounded-lg shadow-xs overflow-hidden flex flex-col justify-between h-[65px]">
+                  <div className="p-2">
+                    <span className="block font-bold text-base leading-none">
+                      {(clearedOffices.HOD ? 1 : 0) + (clearedOffices.College ? 1 : 0) + (clearedOffices.Admissions ? 1 : 0)}
+                    </span>
+                    <span className="text-[7px] font-bold uppercase tracking-wider opacity-90 block mt-1">Cleared</span>
+                  </div>
+                  <div className="bg-[#db8b0b] py-0.5 text-center text-[7px] font-semibold text-white/90 font-poppins">
+                    More info
+                  </div>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-600">Student Affairs</span>
-                <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] ${
-                  clearedOffices.Affairs 
-                    ? "bg-emerald-50 text-[#008767]" 
-                    : "bg-slate-50 text-slate-400 border border-slate-100"
-                }`}>
-                  {clearedOffices.Affairs ? "Approved" : "Pending Demo"}
-                </span>
+              {/* Clearance Directory Mini Table */}
+              <div className="bg-white p-3 rounded-xl shadow-xs border border-slate-200/80 flex-1 flex flex-col justify-between min-h-[220px]">
+                <div>
+                  <h4 className="font-bold text-xs text-slate-800 mb-2 border-b border-slate-100 pb-1">
+                    Clearance Directory
+                  </h4>
+                  
+                  <div className="space-y-2 text-[10px] font-medium text-slate-700">
+                    {/* HOD Office */}
+                    <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-200/40">
+                      <span>1. Head of Dept</span>
+                      {clearedOffices.HOD ? (
+                        <span className="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded text-[8px] font-bold">CLEARED</span>
+                      ) : (
+                        <button
+                          onClick={() => { setSelectedOffice("HOD"); startSimulation(); }}
+                          disabled={simStep !== "idle" && simStep !== "cleared"}
+                          className="bg-[#3482B9] hover:bg-[#2a6996] text-white font-bold px-2.5 py-1 rounded-md text-[8px] cursor-pointer disabled:opacity-50"
+                        >
+                          Submit File
+                        </button>
+                      )}
+                    </div>
+
+                    {/* College Office */}
+                    <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-200/40">
+                      <span>2. College Office</span>
+                      {clearedOffices.College ? (
+                        <span className="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded text-[8px] font-bold">CLEARED</span>
+                      ) : (
+                        clearedOffices.HOD ? (
+                          <button
+                            onClick={() => { setSelectedOffice("College"); startSimulation(); }}
+                            disabled={simStep !== "idle" && simStep !== "cleared"}
+                            className="bg-[#3482B9] hover:bg-[#2a6996] text-white font-bold px-2.5 py-1 rounded-md text-[8px] cursor-pointer disabled:opacity-50"
+                          >
+                            Submit File
+                          </button>
+                        ) : (
+                          <span className="text-[7.5px] font-bold text-slate-400 bg-slate-100 border border-slate-200/60 px-2 py-1 rounded flex items-center gap-1 select-none">
+                            <Lock className="w-2.5 h-2.5" /> Locked
+                          </span>
+                        )
+                      )}
+                    </div>
+
+                    {/* Admissions Office */}
+                    <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-200/40">
+                      <span>3. Admissions Office</span>
+                      {clearedOffices.Admissions ? (
+                        <span className="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded text-[8px] font-bold">CLEARED</span>
+                      ) : (
+                        clearedOffices.College ? (
+                          <button
+                            onClick={() => { setSelectedOffice("Admissions"); startSimulation(); }}
+                            disabled={simStep !== "idle" && simStep !== "cleared"}
+                            className="bg-[#3482B9] hover:bg-[#2a6996] text-white font-bold px-2.5 py-1 rounded-md text-[8px] cursor-pointer disabled:opacity-50"
+                          >
+                            Submit File
+                          </button>
+                        ) : (
+                          <span className="text-[7.5px] font-bold text-slate-400 bg-slate-100 border border-slate-200/60 px-2 py-1 rounded flex items-center gap-1 select-none">
+                            <Lock className="w-2.5 h-2.5" /> Locked
+                          </span>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile panel bottom mockup */}
+                <div className="mt-3 border-t border-slate-100 pt-2 flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center font-bold text-slate-400 text-xs shadow-inner">
+                    E
+                  </div>
+                  <div className="text-left leading-none">
+                    <span className="block font-bold text-slate-800 text-[10px]">EGHRUDJE O. Samuel</span>
+                    <span className="block text-[8px] text-slate-400 mt-0.5 font-semibold">soap@fupre.edu.ng</span>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Document Submission simulation overlay modal inside the simulator box */}
+            {simStep !== "idle" && simStep !== "cleared" && (
+              <div className="absolute inset-x-0 bottom-0 bg-white border-t border-slate-200 p-6 flex flex-col justify-center min-h-[220px] z-10 animate-in slide-in-from-bottom duration-250">
+                {/* Uploading Progress */}
+                {simStep === "uploading" && (
+                  <div className="flex flex-col gap-3 py-3">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-600">
+                      <span className="flex items-center gap-1.5 truncate max-w-[150px]">
+                        <FileText className="w-3.5 h-3.5 text-[#3482B9]" /> {simFileName}
+                      </span>
+                      <span>{simProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-[#3482B9] h-1.5 rounded-full transition-all duration-150" style={{ width: `${simProgress}%` }}></div>
+                    </div>
+                    <span className="text-[9px] font-semibold text-slate-400">Uploading verification data package...</span>
+                  </div>
+                )}
+
+                {/* Hashing Step */}
+                {simStep === "hashing" && (
+                  <div className="flex flex-col items-center justify-center text-center gap-3 py-3">
+                    <RefreshCw className="w-6 h-6 text-[#3482B9] animate-spin" />
+                    <div>
+                      <span className="block text-[11px] font-bold text-slate-700">Client-Side Verification</span>
+                      <span className="block text-[9px] text-[#3482B9] mt-1 font-semibold">Generating SHA-256 local checksum...</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Server verification step */}
+                {simStep === "verifying" && (
+                  <div className="flex flex-col gap-2.5 py-2 text-[10px]">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-600">Checksum Generated</span>
+                      <span className="font-mono text-[8px] bg-slate-100 text-slate-500 py-0.5 px-1.5 rounded truncate max-w-[150px]">
+                        {simHash}
+                      </span>
+                    </div>
+                    <div className="w-full h-px bg-slate-100"></div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#3482B9] animate-ping"></span>
+                      <span className="font-bold text-slate-600">Checking against Office Registry...</span>
+                    </div>
+                    <span className="text-[9px] text-slate-400">Comparing cryptographic signature with server records...</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Float visual certificate download badge when cleared */}
             {showMockCertificate && (
               <div 
-                onClick={() => alert("Simulated certificate unlocked! Real certificates are generated dynamically via PDFKit once all 6 real departments clear your account in the student dashboard.")}
-                className="absolute inset-0 bg-[#5932EA]/95 flex flex-col items-center justify-center text-center p-6 text-white cursor-pointer z-20 animate-in fade-in zoom-in-95 duration-300"
+                onClick={resetSimulation}
+                className="absolute inset-0 bg-[#3482B9]/95 flex flex-col items-center justify-center text-center p-6 text-white cursor-pointer z-20 animate-in fade-in zoom-in-95 duration-350"
               >
                 <div className="w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center mb-3 animate-radar">
                   <FileCheck className="w-6 h-6 text-white" />
                 </div>
                 <h4 className="font-bold text-sm">Clearance Certificate Unlocked</h4>
                 <p className="text-[10px] text-white/80 mt-1 max-w-[200px]">
-                  All offices cleared. Click anywhere to close simulator preview.
+                  All offices cleared. Click anywhere to close simulator preview and reset.
                 </p>
               </div>
             )}
+            
           </div>
         </div>
       </section>
@@ -456,7 +509,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           
           <div className="max-w-2xl mx-auto text-center mb-16">
-            <span className="text-[10px] font-bold text-[#5932EA] uppercase tracking-widest bg-[#5932EA]/10 py-1 px-3 rounded-full">
+            <span className="text-[10px] font-bold text-[#3482B9] uppercase tracking-widest bg-[#3482B9]/10 py-1 px-3 rounded-full">
               Platform Features
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-poppins mt-4 mb-4 tracking-tight">
@@ -473,7 +526,7 @@ export default function LandingPage() {
             {/* Card 1: Live SHA-256 Hasher (Large Bento Grid Item) */}
             <div className="lg:col-span-8 lg:row-span-2 p-6 sm:p-8 rounded-[28px] border border-slate-100 bg-[#F8FAFC] shadow-xs flex flex-col justify-between group transition-all duration-300 hover:border-slate-200">
               <div className="flex flex-col gap-2">
-                <div className="w-10 h-10 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#5932EA] shadow-xs">
+                <div className="w-10 h-10 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#3482B9] shadow-xs">
                   <Shield className="w-5 h-5" />
                 </div>
                 <h3 className="font-poppins font-bold text-lg text-slate-900 mt-2">
@@ -499,7 +552,7 @@ export default function LandingPage() {
                       value={hasherInput}
                       onChange={(e) => setHasherInput(e.target.value)}
                       placeholder="Type something to compute local signature..."
-                      className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl pl-9 pr-4 py-2 text-[10px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#5932EA] transition-all font-poppins"
+                      className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl pl-9 pr-4 py-2 text-[10px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#3482B9] transition-all font-poppins"
                     />
                   </div>
                 </div>
@@ -516,7 +569,7 @@ export default function LandingPage() {
             {/* Card 2: Immutable Auditing (Small Bento Grid Item) */}
             <div className="lg:col-span-4 lg:row-span-1 p-6 rounded-[28px] border border-slate-100 bg-[#F8FAFC] shadow-xs flex flex-col justify-between hover:border-slate-200 transition-all duration-300">
               <div className="flex flex-col gap-1.5">
-                <div className="w-9 h-9 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#5932EA] shadow-xs">
+                <div className="w-9 h-9 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#3482B9] shadow-xs">
                   <Database className="w-4.5 h-4.5" />
                 </div>
                 <h3 className="font-poppins font-bold text-sm text-slate-900 mt-1">
@@ -531,7 +584,7 @@ export default function LandingPage() {
             {/* Card 3: Sync review queue (Small Bento Grid Item) */}
             <div className="lg:col-span-4 lg:row-span-1 p-6 rounded-[28px] border border-slate-100 bg-[#F8FAFC] shadow-xs flex flex-col justify-between hover:border-slate-200 transition-all duration-300">
               <div className="flex flex-col gap-1.5">
-                <div className="w-9 h-9 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#5932EA] shadow-xs">
+                <div className="w-9 h-9 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#3482B9] shadow-xs">
                   <Clock className="w-4.5 h-4.5" />
                 </div>
                 <h3 className="font-poppins font-bold text-sm text-slate-900 mt-1">
@@ -546,7 +599,7 @@ export default function LandingPage() {
             {/* Card 4: Secure Storage (Medium Bento Grid Item) */}
             <div className="lg:col-span-4 lg:row-span-1 p-6 rounded-[28px] border border-slate-100 bg-[#F8FAFC] shadow-xs flex flex-col justify-between hover:border-slate-200 transition-all duration-300">
               <div className="flex flex-col gap-1.5">
-                <div className="w-9 h-9 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#5932EA] shadow-xs">
+                <div className="w-9 h-9 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#3482B9] shadow-xs">
                   <Lock className="w-4.5 h-4.5" />
                 </div>
                 <h3 className="font-poppins font-bold text-sm text-slate-900 mt-1">
@@ -561,7 +614,7 @@ export default function LandingPage() {
             {/* Card 5: Real-time notification (Medium Bento Grid Item) */}
             <div className="lg:col-span-8 lg:row-span-1 p-6 rounded-[28px] border border-slate-100 bg-[#F8FAFC] shadow-xs flex items-center justify-between hover:border-slate-200 transition-all duration-300 gap-6">
               <div className="flex flex-col gap-1.5">
-                <div className="w-9 h-9 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#5932EA] shadow-xs">
+                <div className="w-9 h-9 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center text-[#3482B9] shadow-xs">
                   <Zap className="w-4.5 h-4.5" />
                 </div>
                 <h3 className="font-poppins font-bold text-sm text-slate-900 mt-1">
@@ -586,7 +639,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
           
           <div className="max-w-2xl mx-auto mb-20">
-            <span className="text-[10px] font-bold text-[#5932EA] uppercase tracking-widest bg-[#5932EA]/10 py-1 px-3 rounded-full">
+            <span className="text-[10px] font-bold text-[#3482B9] uppercase tracking-widest bg-[#3482B9]/10 py-1 px-3 rounded-full">
               System Lifecycle
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-poppins mt-4 mb-4 tracking-tight">
@@ -601,7 +654,7 @@ export default function LandingPage() {
             
             {/* Step 1 */}
             <div className="flex flex-col items-center gap-4 text-center group">
-              <div className="w-14 h-14 bg-white border border-slate-150 rounded-2xl text-slate-800 font-extrabold font-poppins flex items-center justify-center shadow-xs text-lg transition-transform group-hover:scale-105 group-hover:border-[#5932EA]/30 duration-300">
+              <div className="w-14 h-14 bg-white border border-slate-150 rounded-2xl text-slate-800 font-extrabold font-poppins flex items-center justify-center shadow-xs text-lg transition-transform group-hover:scale-105 group-hover:border-[#3482B9]/30 duration-300">
                 1
               </div>
               <h3 className="font-poppins font-bold text-slate-800 text-sm mt-1">Upload Documents</h3>
@@ -612,7 +665,7 @@ export default function LandingPage() {
 
             {/* Step 2 */}
             <div className="flex flex-col items-center gap-4 text-center group">
-              <div className="w-14 h-14 bg-white border border-slate-150 rounded-2xl text-slate-800 font-extrabold font-poppins flex items-center justify-center shadow-xs text-lg transition-transform group-hover:scale-105 group-hover:border-[#5932EA]/30 duration-300">
+              <div className="w-14 h-14 bg-white border border-slate-150 rounded-2xl text-slate-800 font-extrabold font-poppins flex items-center justify-center shadow-xs text-lg transition-transform group-hover:scale-105 group-hover:border-[#3482B9]/30 duration-300">
                 2
               </div>
               <h3 className="font-poppins font-bold text-slate-800 text-sm mt-1">Staff Queue Reviews</h3>
@@ -623,7 +676,7 @@ export default function LandingPage() {
 
             {/* Step 3 */}
             <div className="flex flex-col items-center gap-4 text-center group">
-              <div className="w-14 h-14 bg-white border border-slate-150 rounded-2xl text-slate-800 font-extrabold font-poppins flex items-center justify-center shadow-xs text-lg transition-transform group-hover:scale-105 group-hover:border-[#5932EA]/30 duration-300">
+              <div className="w-14 h-14 bg-white border border-slate-150 rounded-2xl text-slate-800 font-extrabold font-poppins flex items-center justify-center shadow-xs text-lg transition-transform group-hover:scale-105 group-hover:border-[#3482B9]/30 duration-300">
                 3
               </div>
               <h3 className="font-poppins font-bold text-slate-800 text-sm mt-1">Unlock & Download</h3>
@@ -641,7 +694,7 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto px-6 lg:px-8">
           
           <div className="text-center mb-16">
-            <span className="text-[10px] font-bold text-[#5932EA] uppercase tracking-widest bg-[#5932EA]/10 py-1 px-3 rounded-full">
+            <span className="text-[10px] font-bold text-[#3482B9] uppercase tracking-widest bg-[#3482B9]/10 py-1 px-3 rounded-full">
               Common Questions
             </span>
             <h2 className="text-3xl font-extrabold text-slate-900 font-poppins mt-4 mb-4 tracking-tight">
@@ -658,7 +711,7 @@ export default function LandingPage() {
                 className="w-full flex items-center justify-between p-5 text-left font-poppins font-bold text-slate-700 text-xs sm:text-sm cursor-pointer hover:bg-slate-50 transition-colors"
               >
                 <span>How long does a clearance review take?</span>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${expandedFaq === 0 ? "rotate-180 text-[#5932EA]" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${expandedFaq === 0 ? "rotate-180 text-[#3482B9]" : ""}`} />
               </button>
               
               <div 
@@ -679,7 +732,7 @@ export default function LandingPage() {
                 className="w-full flex items-center justify-between p-5 text-left font-poppins font-bold text-slate-700 text-xs sm:text-sm cursor-pointer hover:bg-slate-50 transition-colors"
               >
                 <span>What happens if my clearance proof is rejected?</span>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${expandedFaq === 1 ? "rotate-180 text-[#5932EA]" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${expandedFaq === 1 ? "rotate-180 text-[#3482B9]" : ""}`} />
               </button>
               
               <div 
@@ -700,7 +753,7 @@ export default function LandingPage() {
                 className="w-full flex items-center justify-between p-5 text-left font-poppins font-bold text-slate-700 text-xs sm:text-sm cursor-pointer hover:bg-slate-50 transition-colors"
               >
                 <span>Is my clearance certificate verifiable after graduation?</span>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${expandedFaq === 2 ? "rotate-180 text-[#5932EA]" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${expandedFaq === 2 ? "rotate-180 text-[#3482B9]" : ""}`} />
               </button>
               
               <div 
@@ -736,7 +789,7 @@ export default function LandingPage() {
               © {new Date().getFullYear()} Federal University of Petroleum Resources, Effurun. All rights reserved.
             </span>
             <div className="text-[10px] text-slate-400 leading-relaxed max-w-lg">
-              built by <strong className="text-[#5932EA] font-bold">PETER-SADUWA EJIROGHENE</strong> (COS/9558/2022)<br />
+              built by <strong className="text-[#3482B9] font-bold">PETER-SADUWA EJIROGHENE</strong> (COS/9558/2022)<br />
               DEPARTMENT OF COMPUTER SCIENCE,<br />
               FEDERAL UNIVERSITY OF PETROLEUM RESOURCES, EFFURUN, DELTA STATE, NIGERIA.<br />
               JULY, 2026

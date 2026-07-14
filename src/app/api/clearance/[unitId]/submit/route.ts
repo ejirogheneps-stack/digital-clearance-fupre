@@ -34,6 +34,43 @@ export async function POST(
       );
     }
 
+    // Enforce Sequential Clearance Order
+    if (unit.sortOrder > 1) {
+      // Find the previous active unit in the sequence
+      const previousUnit = await prisma.clearingUnit.findFirst({
+        where: {
+          sortOrder: {
+            lt: unit.sortOrder,
+          },
+          isActive: true,
+        },
+        orderBy: {
+          sortOrder: "desc",
+        },
+      });
+
+      if (previousUnit) {
+        // Find the clearance request for the previous unit
+        const previousRequest = await prisma.clearanceRequest.findUnique({
+          where: {
+            studentId_unitId: {
+              studentId: user.userId,
+              unitId: previousUnit.id,
+            },
+          },
+        });
+
+        if (!previousRequest || previousRequest.status !== "APPROVED") {
+          return NextResponse.json(
+            {
+              error: `Sequential clearance required. You must obtain approval from "${previousUnit.name}" before submitting documents for "${unit.name}".`,
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     let clearanceRequest = await prisma.clearanceRequest.findUnique({
       where: {
         studentId_unitId: {

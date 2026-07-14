@@ -11,7 +11,6 @@ import {
   ChevronDown, 
   TrendingUp, 
   Activity, 
-  CheckCircle, 
   AlertCircle, 
   FileText, 
   Upload, 
@@ -19,7 +18,9 @@ import {
   Loader2,
   X,
   Menu,
-  Smile
+  Smile,
+  ArrowRight,
+  Lock
 } from "lucide-react";
 
 interface ClearanceRequest {
@@ -33,6 +34,7 @@ interface ClearanceRequest {
     id: string;
     name: string;
     description: string;
+    sortOrder: number;
   };
 }
 
@@ -100,7 +102,6 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
     }
   }, [token]);
 
-  // Calculate SHA-256 checksum locally on client side for security validation
   const calculateChecksum = async (file: File) => {
     const arrayBuffer = await file.arrayBuffer();
     const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
@@ -149,7 +150,7 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
       setUploadingUnit(null);
       setSelectedFile(null);
       setChecksum("");
-      fetchData(); // reload status
+      fetchData();
     } catch (err: any) {
       setUploadError(err.message || "An error occurred during upload");
     } finally {
@@ -157,15 +158,19 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
     }
   };
 
+  const isRequestUnlocked = (req: ClearanceRequest) => {
+    const predecessors = requests.filter(r => r.clearingUnit.sortOrder < req.clearingUnit.sortOrder);
+    if (predecessors.length === 0) return true;
+    const directPredecessor = [...predecessors].sort((a, b) => b.clearingUnit.sortOrder - a.clearingUnit.sortOrder)[0];
+    return directPredecessor.status === "APPROVED";
+  };
+
   // Stats calculation
   const totalUnits = requests.length;
   const clearedCount = requests.filter(r => r.status === "APPROVED").length;
-  const pendingCount = requests.filter(r => r.status === "PENDING_REVIEW" || r.status === "UNDER_REVIEW").length;
-  const rejectedCount = requests.filter(r => r.status === "REJECTED").length;
   const isFullyCleared = totalUnits > 0 && clearedCount === totalUnits;
-  const progressPercent = totalUnits > 0 ? Math.round((clearedCount / totalUnits) * 100) : 0;
 
-  // Filter & Search table directory
+  // Filter & Search
   const filteredRequests = requests.filter(r => {
     const matchesSearch = r.clearingUnit.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           r.clearingUnit.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -182,31 +187,31 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
     switch (status) {
       case "APPROVED":
         return {
-          bg: "bg-[rgba(22,192,152,0.15)]",
-          border: "border-[#00B087]",
-          text: "text-[#008767]",
+          bg: "bg-green-50",
+          border: "border-green-300",
+          text: "text-green-700",
           label: "Cleared"
         };
       case "REJECTED":
         return {
-          bg: "bg-[#FFC5C5]",
-          border: "border-[#DF0404]",
-          text: "text-[#DF0404]",
+          bg: "bg-red-50",
+          border: "border-red-300",
+          text: "text-red-700",
           label: "Rejected"
         };
       case "PENDING_REVIEW":
       case "UNDER_REVIEW":
         return {
-          bg: "bg-[rgba(255,197,197,0.15)]",
-          border: "border-[#DF9204]",
-          text: "text-[#DF9204]",
+          bg: "bg-amber-50",
+          border: "border-amber-300",
+          text: "text-amber-700",
           label: "Under Review"
         };
       default:
         return {
-          bg: "bg-[#FAFBFF]",
-          border: "border-[#B5B7C0]",
-          text: "text-[#7E7E7E]",
+          bg: "bg-slate-50",
+          border: "border-slate-300",
+          text: "text-slate-500",
           label: "Not Submitted"
         };
     }
@@ -217,50 +222,85 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
     window.open(`/api/certificates/${user.id}?token=${token}`, "_blank");
   };
 
+  const handleScrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
   if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#FAFBFF]">
-        <Loader2 className="animate-spin h-10 w-10 text-[#5932EA]" />
+      <div className="flex h-screen w-screen items-center justify-center bg-[#D2D7DF]">
+        <Loader2 className="animate-spin h-10 w-10 text-[#3482B9]" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-[#FAFBFF] relative overflow-hidden">
-      {/* Mobile Top Navigation Header */}
-      <header className="lg:hidden fixed top-0 left-0 w-full h-16 bg-white border-b border-[#F0F4FA] flex items-center justify-between px-6 z-20 shadow-sm">
-        <div className="flex items-center gap-2.5">
-          <img 
-            src="/fupre_logo.png" 
-            alt="FUPRE Logo" 
-            className="w-8 h-8 object-contain"
-          />
-          <div>
-            <span className="font-poppins font-bold text-sm text-slate-900 tracking-tight">FUPRE DSCS</span>
-            <span className="block text-[8px] text-[#5932EA] uppercase tracking-wider font-bold -mt-1">Digital Clearance</span>
+    <div className="min-h-screen bg-[#D2D7DF] relative flex flex-col overflow-x-hidden selection:bg-[#3482B9] selection:text-white">
+      
+      {/* 1. Dual-Tier Header */}
+      <header className="fixed top-0 left-0 w-full z-30 shadow-md">
+        {/* Tier 1: White logo header banner */}
+        <div className="bg-white h-16 px-4 sm:px-6 flex items-center justify-between border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/fupre_logo.png" 
+              alt="FUPRE Logo" 
+              className="w-10 h-10 object-contain shrink-0"
+            />
+            <div className="text-left font-poppins">
+              <h1 className="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight tracking-tight uppercase">
+                Federal University of
+              </h1>
+              <h1 className="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight tracking-tight uppercase">
+                Petroleum Resources, Effurun
+              </h1>
+              <span className="block font-bold text-red-800 text-[8px] sm:text-[9px] tracking-wider uppercase mt-0.5">
+                Excellence and Relevance
+              </span>
+            </div>
+          </div>
+          <div className="hidden sm:block text-slate-400 font-poppins text-xs font-bold uppercase tracking-wider">
+            Digital Clearance
           </div>
         </div>
-        <button 
-          onClick={() => setMobileMenuOpen(true)}
-          className="p-1.5 rounded-lg border border-[#EEEEEE] hover:bg-slate-50 cursor-pointer"
-        >
-          <Menu className="w-6 h-6 text-slate-700" />
-        </button>
+
+        {/* Tier 2: Blue Navigation Bar */}
+        <div className="bg-[#3482B9] h-12 px-4 sm:px-6 flex items-center justify-between text-white shadow-inner">
+          <button 
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="hidden md:inline text-xs font-semibold">{user.name}</span>
+              <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs uppercase cursor-pointer" onClick={() => setMobileMenuOpen(true)}>
+                {user.name.charAt(0)}
+              </div>
+            </div>
+            <button 
+              className="p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </header>
 
-      {/* Mobile Side-Drawer Overlay */}
+      {/* Slide-Drawer Side Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop overlay */}
+        <div className="fixed inset-0 z-50 flex">
           <div 
             onClick={() => setMobileMenuOpen(false)}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
           ></div>
           
-          {/* Drawer Panel */}
           <aside className="relative w-72 max-w-xs bg-white h-full flex flex-col justify-between py-6 px-5 border-r shadow-2xl z-10 animate-in slide-in-from-left duration-200">
             <div className="flex flex-col">
-              {/* Close Button & Header */}
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2">
                   <img 
@@ -278,30 +318,21 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
                 </button>
               </div>
 
-              {/* Navigation Menu */}
               <nav className="space-y-3">
-                <a href="#" className="flex items-center justify-between px-3.5 py-2.5 bg-[#5932EA] text-white rounded-lg font-poppins font-medium text-xs">
+                <a href="#" className="flex items-center justify-between px-3.5 py-2.5 bg-[#3482B9] text-white rounded-lg font-poppins font-medium text-xs">
                   <div className="flex items-center gap-2.5">
                     <LayoutDashboard className="w-4 h-4 text-white" />
                     <span>Dashboard</span>
                   </div>
                 </a>
                 
-                <a href="#" className="flex items-center justify-between px-3.5 py-2.5 text-[#9197B3] hover:bg-slate-50 rounded-lg font-poppins font-medium text-xs">
+                <a href="#" className="flex items-center justify-between px-3.5 py-2.5 text-slate-500 hover:bg-slate-50 rounded-lg font-poppins font-medium text-xs">
                   <div className="flex items-center gap-2.5">
-                    <UserIcon className="w-4 h-4 text-[#9197B3]" />
+                    <UserIcon className="w-4 h-4 text-slate-500" />
                     <span>Profile</span>
                   </div>
                 </a>
 
-                <a href="#" className="flex items-center justify-between px-3.5 py-2.5 text-[#9197B3] hover:bg-slate-50 rounded-lg font-poppins font-medium text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <HelpCircle className="w-4 h-4 text-[#9197B3]" />
-                    <span>Help</span>
-                  </div>
-                </a>
-
-                {/* Accessible Sign Out */}
                 <button 
                   onClick={() => { setMobileMenuOpen(false); onLogout(); }}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-red-500 hover:bg-red-50 rounded-lg font-poppins font-medium text-xs text-left cursor-pointer"
@@ -312,17 +343,16 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
               </nav>
             </div>
 
-            {/* Profile bottom */}
-            <div className="flex items-center justify-between pt-4 border-t border-[#EEEEEE]">
+            <div className="flex items-center pt-4 border-t border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#EAABF0] to-[#5932EA] flex items-center justify-center font-bold text-white uppercase text-xs">
+                <div className="w-8 h-8 rounded-full bg-[#3482B9] flex items-center justify-center font-bold text-white uppercase text-xs">
                   {user.name.charAt(0)}
                 </div>
                 <div>
-                  <span className="block font-poppins font-semibold text-xs text-black max-w-[100px] truncate">
+                  <span className="block font-poppins font-semibold text-xs text-slate-800 max-w-[140px] truncate">
                     {user.name}
                   </span>
-                  <span className="block text-[8px] text-[#757575] font-poppins">
+                  <span className="block text-[8px] text-slate-400 font-poppins">
                     {profile?.matricNumber || "Student"}
                   </span>
                 </div>
@@ -332,339 +362,310 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
         </div>
       )}
 
-      {/* 1. Desktop Sidebar Menu */}
-      <aside className="hidden lg:flex w-[306px] min-h-screen bg-white shadow-[0px_10px_60px_rgba(226,236,249,0.5)] flex flex-col justify-between py-9 px-7 border-r border-[#F0F4FA] shrink-0 z-10">
-        <div className="flex flex-col">
-          {/* FUPRE Logo Header */}
-          <div className="flex items-center gap-3 mb-12">
-            <img 
-              src="/fupre_logo.png" 
-              alt="FUPRE Logo" 
-              className="w-10 h-10 object-contain"
-            />
-            <div>
-              <span className="font-poppins font-semibold text-xl text-black">Dashboard</span>
-              <span className="block text-[10px] text-[#838383] -mt-1 font-medium">v.01</span>
-            </div>
+      {/* 2. Main Content Grid (Padded for header layout) */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-12 flex flex-col gap-6 z-10">
+        
+        {/* Title & Breadcrumb Block */}
+        <div className="flex flex-col gap-2 mt-2">
+          <h2 className="font-poppins font-bold text-xl sm:text-2xl text-slate-800">
+            Dashboard
+          </h2>
+          
+          <div className="bg-[#E2E8F0] px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 flex items-center gap-2 border border-slate-300/40">
+            <LayoutDashboard className="w-4 h-4 text-slate-500 shrink-0" />
+            <span>Home</span>
+            <span className="text-slate-400 font-normal">&gt;</span>
+            <span className="text-slate-500 font-normal">Dashboard</span>
           </div>
+        </div>
 
-          {/* List Menu Items */}
-          <nav className="space-y-4">
-            <a href="#" className="flex items-center justify-between px-4 py-3 bg-[#5932EA] text-white rounded-lg transition-all group font-poppins font-medium text-sm">
-              <div className="flex items-center gap-3">
-                <LayoutDashboard className="w-5 h-5 text-white" />
-                <span>Dashboard</span>
-              </div>
-            </a>
-            
-            <a href="#" className="flex items-center justify-between px-4 py-3 text-[#9197B3] hover:bg-[#FAFBFF] rounded-lg transition-all font-poppins font-medium text-sm group">
-              <div className="flex items-center gap-3">
-                <UserIcon className="w-5 h-5 text-[#9197B3] group-hover:text-[#5932EA]" />
-                <span className="group-hover:text-[#292D32]">Profile</span>
-              </div>
-              <ChevronDown className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
-
-            <a href="#" className="flex items-center justify-between px-4 py-3 text-[#9197B3] hover:bg-[#FAFBFF] rounded-lg transition-all font-poppins font-medium text-sm group">
-              <div className="flex items-center gap-3">
-                <HelpCircle className="w-5 h-5 text-[#9197B3] group-hover:text-[#5932EA]" />
-                <span className="group-hover:text-[#292D32]">Help</span>
-              </div>
-              <ChevronDown className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
-
-            {/* Accessible Labeled Logout Button */}
-            <button 
-              onClick={onLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-all font-poppins font-medium text-sm text-left cursor-pointer"
+        {/* 4. Portal-Style Statistics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-poppins">
+          {/* Card 1: Outstanding Count (Green) */}
+          <div className="bg-[#00A65A] text-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between min-h-[140px] transform hover:scale-[1.01] transition-transform">
+            <div className="p-6">
+              <span className="block font-bold text-4xl mb-1">{totalUnits - clearedCount}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/80">Outstanding Offices</span>
+            </div>
+            <div 
+              className="bg-[#008d4c] py-2 px-4 text-center text-[10px] sm:text-xs font-semibold text-white/95 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-[#00733e] transition-colors" 
+              onClick={() => handleScrollToSection("directory")}
             >
-              <LogOut className="w-5 h-5 text-red-500" />
-              <span>Sign Out</span>
-            </button>
-          </nav>
-        </div>
-
-          {/* User profile section bottom sidebar (Ellipse 8 / Group 30) */}
-          <div className="flex items-center pt-4 border-t border-[#EEEEEE]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#EAABF0] to-[#5932EA] flex items-center justify-center font-bold text-white uppercase shadow-sm">
-                {user.name.charAt(0)}
-              </div>
-              <div>
-                <span className="block font-poppins font-semibold text-sm text-black max-w-[150px] truncate">
-                  {user.name}
-                </span>
-                <span className="block text-[10px] text-[#757575] font-poppins">
-                  {profile?.matricNumber || "Student"}
-                </span>
-              </div>
+              <span>More info</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </div>
-      </aside>
 
-      {/* 2. Main Layout Context */}
-      <main className="flex-1 min-h-screen pt-24 lg:pt-10 pb-10 px-6 lg:px-12 overflow-y-auto z-10 flex flex-col gap-8">
-        {/* Banner Title Greeting */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-poppins font-normal text-2xl text-black flex items-center gap-2">
-              Hello {user.name.split(" ")[0]} <Smile className="w-6 h-6 text-amber-500 inline-block" />
-            </h1>
-            <p className="text-xs text-[#9197B3] mt-1 font-medium">
-              Check your requirements and clearance status details below.
-            </p>
-          </div>
-
-          {/* Fully Cleared Certificate banner */}
-          {isFullyCleared && (
-            <button
-              onClick={handleDownloadCertificate}
-              className="flex items-center justify-center gap-2 py-3 px-5 border border-[#00B087] bg-[rgba(22,192,152,0.1)] hover:bg-[rgba(22,192,152,0.2)] text-[#008767] font-semibold rounded-xl text-sm transition-all shadow-md cursor-pointer w-full sm:w-auto hover:translate-y-[-1px] active:translate-y-[1px]"
+          {/* Card 2: Cleared Count (Orange) */}
+          <div className="bg-[#F39C12] text-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between min-h-[140px] transform hover:scale-[1.01] transition-transform">
+            <div className="p-6">
+              <span className="block font-bold text-4xl mb-1">{clearedCount}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/80">Cleared Offices</span>
+            </div>
+            <div 
+              className="bg-[#db8b0b] py-2 px-4 text-center text-[10px] sm:text-xs font-semibold text-white/95 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-[#c87f0a] transition-colors" 
+              onClick={() => handleScrollToSection("directory")}
             >
-              <Download className="w-4 h-4" /> Download Clearance Certificate
-            </button>
-          )}
-        </div>
-
-        {/* 3. Statistics Widgets Rows (Figma Earning layout parameters) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white py-6 px-10 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.5)] border border-[#F0F4FA]">
-          {/* Stats 1: Progress */}
-          <div className="flex items-center gap-5 pr-6 border-r border-[#F0F0F0] last:border-none">
-            <div className="w-[84px] h-[84px] rounded-full bg-gradient-to-tr from-[#D3FFE7] to-[#EFFFF6] flex items-center justify-center">
-              <TrendingUp className="w-10 h-10 text-[#00AC4F]" />
-            </div>
-            <div>
-              <span className="block text-xs font-poppins text-[#ACACAC] mb-1">Clearance Progress</span>
-              <span className="block font-poppins font-semibold text-3xl text-[#333333] leading-none mb-1">
-                {progressPercent}%
-              </span>
-              <span className="text-[10px] text-[#00AC4F] font-bold">
-                {clearedCount} of {totalUnits} cleared
-              </span>
-            </div>
-          </div>
-
-          {/* Stats 2: Reviewing */}
-          <div className="flex items-center gap-5 pr-6 border-r border-[#F0F0F0] last:border-none">
-            <div className="w-[84px] h-[84px] rounded-full bg-gradient-to-tr from-[#E6E6FA] to-[#F5F5FC] flex items-center justify-center">
-              <Activity className="w-10 h-10 text-[#5932EA]" />
-            </div>
-            <div>
-              <span className="block text-xs font-poppins text-[#ACACAC] mb-1">Pending Review</span>
-              <span className="block font-poppins font-semibold text-3xl text-[#333333] leading-none mb-1">
-                {pendingCount}
-              </span>
-              <span className="text-[10px] text-[#5932EA] font-bold">
-                Under review by staff
-              </span>
-            </div>
-          </div>
-
-          {/* Stats 3: Rejected */}
-          <div className="flex items-center gap-5 last:border-none">
-            <div className="w-[84px] h-[84px] rounded-full bg-[#FFEAEA] flex items-center justify-center">
-              <AlertCircle className="w-10 h-10 text-[#DF0404]" />
-            </div>
-            <div>
-              <span className="block text-xs font-poppins text-[#ACACAC] mb-1">Attention Required</span>
-              <span className="block font-poppins font-semibold text-3xl text-[#333333] leading-none mb-1">
-                {rejectedCount}
-              </span>
-              <span className={`text-[10px] font-bold ${rejectedCount > 0 ? 'text-[#DF0404]' : 'text-[#ACACAC]'}`}>
-                {rejectedCount > 0 ? "Requires correction" : "No active warnings"}
-              </span>
+              <span>More info</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </div>
         </div>
 
-        {/* 4. Table Directory Section (Figma Product box card parameters) */}
-        <div className="bg-white py-8 px-6 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.5)] border border-[#F0F4FA] flex-1 flex flex-col justify-between min-h-[500px]">
-          <div>
-            {/* Header controls inside card table */}
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 px-4">
-              <div>
-                <h3 className="font-poppins font-semibold text-2xl text-black">
-                  Clearance Directory
-                </h3>
-                <span className="text-xs text-[#16C098] font-poppins font-normal">
-                  Active Requirements
-                </span>
-              </div>
-
-              {/* Search & Sort Widgets */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                {/* Search control */}
-                <div className="relative w-full md:w-64">
-                  <Search className="w-5 h-5 text-[#B5B7C0] absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search Department"
-                    className="w-full bg-[#F9FBFF] border border-none rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#292D32] focus:outline-none focus:ring-2 focus:ring-[#5932EA] transition-all font-poppins"
-                  />
+        {/* 5. Responsive Main Content Area (Directory + Profile card) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* Table Directory Box (8-columns on large screens) */}
+          <div id="directory" className="lg:col-span-8 bg-white py-6 px-4 sm:px-6 rounded-2xl shadow-md border border-slate-200 flex flex-col justify-between min-h-[500px]">
+            <div>
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 px-2">
+                <div>
+                  <h3 className="font-poppins font-semibold text-xl text-slate-800">
+                    Clearance Directory
+                  </h3>
+                  <span className="text-xs text-[#00A65A] font-poppins font-semibold">
+                    Active Requirements
+                  </span>
                 </div>
 
-                {/* Filter status dropdown */}
-                <div className="relative w-full sm:w-auto">
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="bg-[#F9FBFF] border border-[#EEEEEE] rounded-xl px-4 py-2 text-xs text-[#7E7E7E] focus:outline-none focus:ring-2 focus:ring-[#5932EA] transition-all font-poppins cursor-pointer"
-                  >
-                    <option value="all">Sort by : All</option>
-                    <option value="cleared">Cleared</option>
-                    <option value="pending">Pending Review</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="not_submitted">Not Submitted</option>
-                  </select>
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-56">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search Department"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-[#292D32] focus:outline-none focus:ring-2 focus:ring-[#3482B9] transition-all font-poppins"
+                    />
+                  </div>
+
+                  <div className="relative w-full sm:w-auto">
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#3482B9] transition-all font-poppins cursor-pointer"
+                    >
+                      <option value="all">Sort by : All</option>
+                      <option value="cleared">Cleared</option>
+                      <option value="pending">Pending Review</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="not_submitted">Not Submitted</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Table layout container */}
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-[#EEEEEE] text-left text-xs font-semibold text-[#B5B7C0] font-poppins">
-                    <th className="py-4 px-6">Clearing Office</th>
-                    <th className="py-4 px-6">Description</th>
-                    <th className="py-4 px-6 text-center">Status</th>
-                    <th className="py-4 px-6 text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#EEEEEE] font-poppins text-xs font-medium text-[#292D32]">
-                  {filteredRequests.length > 0 ? (
-                    filteredRequests.map((req) => {
-                      const style = getStatusStyle(req.status);
-                      return (
-                        <tr key={req.id} className="hover:bg-[#FAFBFF] transition-all group">
-                          <td className="py-4 px-6 font-semibold text-sm">
-                            {req.clearingUnit.name}
-                          </td>
-                          <td className="py-4 px-6 text-[#7E7E7E] max-w-sm truncate" title={req.clearingUnit.description}>
-                            {req.clearingUnit.description}
-                          </td>
-                          <td className="py-4 px-6 text-center">
-                            <span className={`inline-block border rounded px-3 py-1.5 text-xs font-semibold ${style.bg} ${style.border} ${style.text} w-28 text-center`}>
-                              {style.label}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 text-center">
-                            {req.status === "NOT_SUBMITTED" || req.status === "REJECTED" ? (
-                              <button
-                                onClick={() => setUploadingUnit(req)}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-[#5932EA] hover:bg-[#4623E9] border border-[#5932EA] rounded-lg px-3.5 py-2.5 transition-all shadow-md hover:shadow-lg cursor-pointer"
-                              >
-                                <Upload className="w-3.5 h-3.5" /> Submit File
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => setUploadingUnit(req)}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-[#5932EA] hover:text-[#4623E9] bg-white border border-[#EEEEEE] rounded-lg px-3.5 py-2.5 transition-all cursor-pointer"
-                              >
-                                View Details
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="py-12 px-6 text-center text-[#B5B7C0]">
-                        No clearing requirements found matching filters.
-                      </td>
+              {/* Responsive Scrollable Table */}
+              <div className="overflow-x-auto rounded-lg border border-slate-100">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold text-slate-400 font-poppins">
+                      <th className="py-3 px-4">Clearing Office</th>
+                      <th className="py-3 px-4">Description</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                      <th className="py-3 px-4 text-center">Action</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-poppins text-xs font-medium text-[#292D32]">
+                    {filteredRequests.length > 0 ? (
+                      filteredRequests.map((req) => {
+                        const style = getStatusStyle(req.status);
+                        const unlocked = isRequestUnlocked(req);
+                        const isLocked = (req.status === "NOT_SUBMITTED" || req.status === "REJECTED") && !unlocked;
+                        
+                        return (
+                          <tr key={req.id} className="hover:bg-slate-50/55 transition-all">
+                            <td className="py-4 px-4 font-semibold text-sm">
+                              {req.clearingUnit.name}
+                            </td>
+                            <td className="py-4 px-4 text-slate-500 max-w-[200px] truncate" title={req.clearingUnit.description}>
+                              {req.clearingUnit.description}
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              {isLocked ? (
+                                <span className="inline-block border border-slate-200 bg-slate-100 text-slate-400 rounded-md px-2.5 py-1 text-[11px] font-semibold w-28 text-center">
+                                  Locked
+                                </span>
+                              ) : (
+                                <span className={`inline-block border rounded-md px-2.5 py-1 text-[11px] font-semibold ${style.bg} ${style.border} ${style.text} w-28 text-center`}>
+                                  {style.label}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              {req.status === "NOT_SUBMITTED" || req.status === "REJECTED" ? (
+                                unlocked ? (
+                                  <button
+                                    onClick={() => setUploadingUnit(req)}
+                                    className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-white bg-[#3482B9] hover:bg-[#2a6996] rounded-xl px-3.5 py-2 transition-all shadow-sm hover:shadow-md cursor-pointer shrink-0"
+                                  >
+                                    <Upload className="w-3.5 h-3.5" /> Submit File
+                                  </button>
+                                ) : (
+                                  <button
+                                    disabled
+                                    title="You must obtain approval from the previous clearing office first."
+                                    className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-400 bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2 transition-all cursor-not-allowed shrink-0"
+                                  >
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" /> Locked
+                                  </button>
+                                )
+                              ) : (
+                                <button
+                                  onClick={() => setUploadingUnit(req)}
+                                  className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 bg-white border border-slate-200 rounded-xl px-3.5 py-2 transition-all cursor-pointer hover:bg-slate-50 shrink-0"
+                                >
+                                  View Details
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-12 px-4 text-center text-slate-400">
+                          No clearing requirements found matching filters.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 px-2 font-poppins text-xs font-semibold">
+              <span className="text-slate-400">
+                Showing {filteredRequests.length} of {requests.length} entries
+              </span>
+              <div className="flex items-center gap-2">
+                <button className="flex items-center justify-center w-6 h-6 border border-slate-200 bg-slate-50 rounded text-slate-500 disabled:opacity-50" disabled>
+                  &lt;
+                </button>
+                <button className="flex items-center justify-center w-6 h-6 border border-[#3482B9] bg-[#3482B9] rounded text-white font-bold">
+                  1
+                </button>
+                <button className="flex items-center justify-center w-6 h-6 border border-slate-200 bg-slate-50 rounded text-slate-500 disabled:opacity-50" disabled>
+                  &gt;
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Footer showing item details (Figma pagination specs) */}
-          <div className="flex justify-between items-center mt-8 px-4 font-poppins text-xs font-semibold">
-            <span className="text-[#B5B7C0]">
-              Showing {filteredRequests.length} of {requests.length} entries
-            </span>
-            <div className="flex items-center gap-2">
-              <button className="flex items-center justify-center w-6 h-6 border border-[#EEEEEE] bg-[#F5F5F5] rounded text-[#404B52] disabled:opacity-50" disabled>
-                &lt;
-              </button>
-              <button className="flex items-center justify-center w-6 h-6 border border-[#5932EA] bg-[#5932EA] rounded text-white font-bold">
-                1
-              </button>
-              <button className="flex items-center justify-center w-6 h-6 border border-[#EEEEEE] bg-[#F5F5F5] rounded text-[#404B52] disabled:opacity-50" disabled>
-                &gt;
-              </button>
+          {/* Profile Card Sidebar Panel (4-columns on large screens) */}
+          <div className="lg:col-span-4 flex flex-col gap-6 w-full">
+            
+            {/* Student Profile Card (Blue top border) */}
+            <div className="border-t-4 border-[#3482B9] bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col items-center justify-center text-center font-poppins">
+              <div className="w-24 h-24 rounded-lg border-2 border-slate-200 bg-slate-50 overflow-hidden mb-4 flex items-center justify-center relative shadow-inner">
+                <div className="w-full h-full bg-slate-100 flex items-center justify-center font-extrabold text-slate-400 text-3xl uppercase">
+                  {user.name.charAt(0)}
+                </div>
+              </div>
+              <h3 className="font-bold text-slate-800 text-base mb-1">{user.name}</h3>
+              <div className="px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 mb-4 select-all">
+                {profile?.matricNumber || "Student"}
+              </div>
+
+              {/* Extra profile details */}
+              <div className="w-full border-t border-slate-100 pt-4 mt-2 space-y-2.5 text-left text-xs text-slate-500 font-medium">
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Department:</span>
+                  <span className="font-bold text-slate-700 text-right">{profile?.department || "N/A"}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Faculty:</span>
+                  <span className="font-bold text-slate-700 text-right">{profile?.faculty || "N/A"}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Level:</span>
+                  <span className="font-bold text-slate-700 text-right">{profile?.level || "N/A"}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Graduation Session:</span>
+                  <span className="font-bold text-slate-700 text-right">{profile?.sessionOfGraduation || "N/A"}</span>
+                </div>
+              </div>
             </div>
+
+            {/* Certificate Download Panel (If fully cleared) */}
+            {isFullyCleared && (
+              <button
+                onClick={handleDownloadCertificate}
+                className="flex items-center justify-center gap-2 py-3.5 px-5 border border-transparent bg-[#3482B9] hover:bg-[#2a6996] text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-[#3482B9]/20 hover:shadow-lg cursor-pointer w-full hover:translate-y-[-1px] active:translate-y-[1px]"
+              >
+                <Download className="w-4.5 h-4.5" /> Download Certificate
+              </button>
+            )}
+
           </div>
+
         </div>
+
       </main>
 
-      {/* 5. Document Upload / Detail Modal */}
+      {/* 6. Document Upload / Detail Modal */}
       {uploadingUnit && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 transition-all">
-          <div className="bg-white w-full max-w-lg rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.9)] border border-[#F0F4FA] p-8 flex flex-col gap-6 relative">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 p-8 flex flex-col gap-6 relative">
             <button 
               onClick={() => { setUploadingUnit(null); setSelectedFile(null); setUploadError(""); }}
-              className="absolute right-6 top-6 text-[#9197B3] hover:text-black transition-colors cursor-pointer"
+              className="absolute right-6 top-6 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer animate-fade-in"
             >
               <X className="w-6 h-6" />
             </button>
 
             <div>
-              <h3 className="font-poppins font-semibold text-2xl text-black">
+              <h3 className="font-poppins font-semibold text-xl text-slate-800">
                 {uploadingUnit.clearingUnit.name}
               </h3>
-              <p className="text-xs text-[#9197B3] font-poppins mt-1">
+              <p className="text-xs text-slate-400 font-poppins mt-1">
                 Clearance Submission Portal
               </p>
             </div>
 
-            {/* If there is a rejection note, display it */}
             {uploadingUnit.status === "REJECTED" && uploadingUnit.rejectionNote && (
-              <div className="p-4 bg-[#FFEAEA] border border-[#DF0404] text-[#DF0404] rounded-xl text-xs font-semibold">
-                <span className="block uppercase text-[10px] tracking-wider mb-1 font-bold text-red-700">Rejection Note:</span>
+              <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold">
+                <span className="block uppercase text-[10px] tracking-wider mb-1 font-bold text-red-800">Rejection Note:</span>
                 "{uploadingUnit.rejectionNote}"
               </div>
             )}
 
-            {/* If it's already cleared or pending, show read-only details */}
             {uploadingUnit.status !== "NOT_SUBMITTED" && uploadingUnit.status !== "REJECTED" ? (
               <div className="space-y-4">
-                <div className="p-4 bg-[#FAFBFF] border border-[#EEEEEE] rounded-xl flex items-center justify-between">
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-8 h-8 text-[#5932EA]" />
+                    <FileText className="w-8 h-8 text-[#3482B9]" />
                     <div>
-                      <span className="block font-semibold text-xs text-black">Submission Receipt</span>
-                      <span className="block text-[10px] text-[#9197B3]">
+                      <span className="block font-semibold text-xs text-slate-800">Submission Receipt</span>
+                      <span className="block text-[10px] text-slate-400">
                         Uploaded {uploadingUnit.submittedAt ? new Date(uploadingUnit.submittedAt).toLocaleDateString() : "Pending"}
                       </span>
                     </div>
                   </div>
-                  <span className={`inline-block border rounded px-3 py-1 text-[10px] font-bold uppercase ${getStatusStyle(uploadingUnit.status).bg} ${getStatusStyle(uploadingUnit.status).border} ${getStatusStyle(uploadingUnit.status).text}`}>
+                  <span className={`inline-block border rounded px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusStyle(uploadingUnit.status).bg} ${getStatusStyle(uploadingUnit.status).border} ${getStatusStyle(uploadingUnit.status).text}`}>
                     {uploadingUnit.status}
                   </span>
                 </div>
-                <p className="text-xs text-[#9197B3] font-poppins text-center leading-relaxed mt-4">
-                  This unit is locked for review. You will receive an notification if corrections are needed.
+                <p className="text-xs text-slate-400 font-poppins text-center leading-relaxed mt-4">
+                  This unit is locked for review. You will receive a notification if corrections are needed.
                 </p>
               </div>
             ) : (
-              /* Otherwise, show the upload form */
               <form onSubmit={handleUploadSubmit} className="space-y-6">
                 {uploadError && (
-                  <div className="p-4 rounded-xl bg-[#FFEAEA] border border-[#DF0404] text-xs text-[#DF0404] font-semibold">
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 font-semibold">
                     {uploadError}
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#9197B3] uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Select Verification Document
                   </label>
-                  <div className="border-2 border-dashed border-[#EEEEEE] rounded-2xl p-8 flex flex-col items-center justify-center bg-[#FAFBFF] hover:bg-[#F9FBFF] hover:border-[#5932EA] transition-all cursor-pointer relative group">
+                  <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 hover:border-[#3482B9] transition-all cursor-pointer relative group">
                     <input
                       type="file"
                       accept=".pdf,image/*"
@@ -672,17 +673,17 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
                       required
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
-                    <Upload className="w-10 h-10 text-[#B5B7C0] group-hover:text-[#5932EA] transition-colors mb-3" />
+                    <Upload className="w-10 h-10 text-slate-450 group-hover:text-[#3482B9] transition-colors mb-3" />
                     {selectedFile ? (
-                      <span className="text-xs text-[#292D32] font-semibold break-all text-center">
+                      <span className="text-xs text-slate-800 font-semibold break-all text-center">
                         {selectedFile.name}
                       </span>
                     ) : (
                       <>
-                        <span className="text-xs text-[#292D32] font-semibold">
+                        <span className="text-xs text-slate-700 font-semibold">
                           Click to browse file
                         </span>
-                        <span className="text-[10px] text-[#9197B3] mt-1">
+                        <span className="text-[10px] text-slate-400 mt-1">
                           Accepts PDF, PNG, JPG up to 5MB
                         </span>
                       </>
@@ -691,9 +692,9 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
                 </div>
 
                 {checksum && (
-                  <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl flex items-center justify-between text-[10px]">
-                    <span className="font-semibold text-zinc-500 uppercase">SHA-256 Checksum:</span>
-                    <span className="font-mono text-zinc-600 break-all select-all font-semibold max-w-[250px] truncate" title={checksum}>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-[10px]">
+                    <span className="font-semibold text-slate-400 uppercase">SHA-256 Checksum:</span>
+                    <span className="font-mono text-slate-500 break-all select-all font-semibold max-w-[250px] truncate" title={checksum}>
                       {checksum}
                     </span>
                   </div>
@@ -702,7 +703,7 @@ export default function StudentDashboard({ user, onLogout }: StudentDashboardPro
                 <button
                   type="submit"
                   disabled={uploadLoading || !selectedFile}
-                  className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-[#5932EA] hover:bg-[#4623E9] focus:outline-none shadow-lg shadow-[rgba(89,50,234,0.25)] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-[#3482B9] hover:bg-[#2a6996] focus:outline-none shadow-md shadow-[#3482B9]/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploadLoading ? (
                     <Loader2 className="animate-spin h-5 w-5 mr-2" />
