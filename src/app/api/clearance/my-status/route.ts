@@ -22,6 +22,7 @@ export async function GET(req: Request) {
             id: true,
             name: true,
             description: true,
+            sortOrder: true,
           },
         },
         documents: {
@@ -35,7 +36,7 @@ export async function GET(req: Request) {
       },
       orderBy: {
         clearingUnit: {
-          name: "asc",
+          sortOrder: "asc",
         },
       },
     });

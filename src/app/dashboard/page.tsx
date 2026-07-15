@@ -51,10 +51,10 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#FAFBFF]">
+      <div className="flex h-screen w-screen items-center justify-center bg-[#D2D7DF]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="animate-spin h-10 w-10 text-[#5932EA]" />
-          <span className="text-xs font-semibold text-[#9197B3] font-poppins">Loading workspace...</span>
+          <Loader2 className="animate-spin h-10 w-10 text-[#3482B9]" />
+          <span className="text-xs font-semibold text-slate-500 font-poppins">Loading workspace...</span>
         </div>
       </div>
     );
@@ -73,13 +73,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-[#FAFBFF]">
+    <div className="flex h-screen w-screen items-center justify-center bg-[#D2D7DF]">
       <div className="text-center font-poppins">
         <h3 className="text-lg font-bold text-red-600">Access Denied</h3>
-        <p className="text-xs text-[#9197B3] mt-2">Your profile role is unrecognized.</p>
+        <p className="text-xs text-slate-500 mt-2">Your profile role is unrecognized.</p>
         <button 
           onClick={handleLogout} 
-          className="mt-4 px-4 py-2 bg-[#5932EA] text-white text-xs font-semibold rounded-lg shadow cursor-pointer"
+          className="mt-4 px-5 py-2.5 bg-[#3482B9] hover:bg-[#2a6996] text-white text-xs font-semibold rounded-xl shadow transition-all cursor-pointer"
         >
           Sign Out
         </button>

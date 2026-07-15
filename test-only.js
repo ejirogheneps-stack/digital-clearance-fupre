@@ -128,7 +128,7 @@ async function runTests() {
     assert(studentsRes.body.students?.length > 0, "Student list contains at least 1 student");
     
     if (studentsRes.body.students) {
-      const foundTestStudent = studentsRes.body.students.some(s => s.email === "student@fupre.edu.ng");
+      const foundTestStudent = studentsRes.body.students.some(s => s.user?.email === "student@fupre.edu.ng");
       assert(foundTestStudent, "Admin list includes our seeded student 'student@fupre.edu.ng'");
     }
 

@@ -79,25 +79,25 @@ export async function GET(req: Request) {
       const isFullyCleared = totalActiveUnits > 0 && approvedCount === totalActiveUnits;
 
       return {
-        id: s.userId,
-        name: s.user.name,
-        email: s.user.email,
-        phone: s.user.phone,
+        userId: s.userId,
         matricNumber: s.matricNumber,
         department: s.department,
         faculty: s.faculty,
         level: s.level,
         sessionOfGraduation: s.sessionOfGraduation,
-        createdAt: s.user.createdAt,
-        approvedRequestsCount: approvedCount,
-        totalRequestsCount: totalActiveUnits,
+        user: {
+          name: s.user.name,
+          email: s.user.email,
+          phone: s.user.phone,
+        },
         isFullyCleared,
         clearanceRequests: s.clearanceRequests.map((r) => ({
-          unitId: r.unitId,
-          unitName: r.clearingUnit.name,
+          id: r.id,
           status: r.status,
-          rejectionNote: r.rejectionNote,
-          reviewedAt: r.reviewedAt,
+          unitId: r.unitId,
+          clearingUnit: {
+            name: r.clearingUnit.name,
+          },
         })),
       };
     });

@@ -13,9 +13,12 @@ import {
   CheckSquare, 
   Eye, 
   Check, 
-  X, 
+  X,
+  Menu,
+  Smile,
   Loader2,
-  AlertTriangle 
+  AlertTriangle,
+  ArrowRight
 } from "lucide-react";
 
 interface Document {
@@ -65,28 +68,12 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
   const [rejectionNote, setRejectionNote] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("dscs_token") : null;
 
   const fetchSubmissions = async () => {
     try {
-      // 1. Get staff unit assignment
-      // Since a staff is assigned to a unit, let's fetch staff profile or units first
-      // In the seed script, we assigned staff member users to units
-      // Let's call the admin endpoints or load dynamically by checking which unit this staff belongs to
-      // To get the unit assigned to the logged-in staff member, we can make a query to get staff assignment
-      // Wait, let's call the GET /api/students/me to load, or wait:
-      // The staff user ID matches their staff record ID.
-      // Let's fetch unitId by calling the submissions endpoint with a dummy 'my-unit' or checking all units.
-      // Wait! We can call GET /api/admin/staff and find this staff, OR let's call `/api/units/` or submissions queue.
-      // Wait, is there a unit detection endpoint?
-      // In our route implementation: GET `/api/units/[unitId]/submissions`
-      // Wait! How does the staff know their unitId?
-      // We can fetch the list of all clearing units `/api/admin/units`, and for each unit fetch submissions.
-      // Or, better yet, the staff can load their details from the database!
-      // Let's check how staff details are queried:
-      // We can fetch `GET /api/admin/staff` and look for the staff entry where `userId === user.id`.
-      // The staff record contains `assignments` listing their `unitId`!
       const staffRes = await fetch("/api/admin/staff", {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -99,7 +86,6 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
         setUnitName(assignedUnit.name);
         setUnitId(assignedUnit.id);
         
-        // 2. Fetch submissions for this unit
         const subRes = await fetch(`/api/units/${assignedUnit.id}/submissions`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
@@ -194,23 +180,23 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
     switch (status) {
       case "APPROVED":
         return {
-          bg: "bg-[rgba(22,192,152,0.15)]",
-          border: "border-[#00B087]",
-          text: "text-[#008767]",
+          bg: "bg-green-50",
+          border: "border-green-300",
+          text: "text-green-700",
           label: "Cleared"
         };
       case "REJECTED":
         return {
-          bg: "bg-[#FFC5C5]",
-          border: "border-[#DF0404]",
-          text: "text-[#DF0404]",
+          bg: "bg-red-50",
+          border: "border-red-300",
+          text: "text-red-700",
           label: "Rejected"
         };
       default:
         return {
-          bg: "bg-[rgba(255,197,197,0.15)]",
-          border: "border-[#DF9204]",
-          text: "text-[#DF9204]",
+          bg: "bg-amber-50",
+          border: "border-amber-300",
+          text: "text-amber-700",
           label: "Action Pending"
         };
     }
@@ -221,321 +207,434 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
   const pendingCount = submissions.filter(s => s.status === "PENDING_REVIEW" || s.status === "UNDER_REVIEW").length;
   const completedCount = submissions.filter(s => s.status === "APPROVED" || s.status === "REJECTED").length;
 
+  const handleScrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
   if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#FAFBFF]">
-        <Loader2 className="animate-spin h-10 w-10 text-[#5932EA]" />
+      <div className="flex h-screen w-screen items-center justify-center bg-[#D2D7DF]">
+        <Loader2 className="animate-spin h-10 w-10 text-[#3482B9]" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-[#FAFBFF] relative overflow-hidden">
-      {/* 1. Sidebar Menu (Figma Specifications) */}
-      <aside className="w-[306px] min-h-screen bg-white shadow-[0px_10px_60px_rgba(226,236,249,0.5)] flex flex-col justify-between py-9 px-7 border-r border-[#F0F4FA] shrink-0 z-10">
-        <div className="flex flex-col">
-          {/* Logo Header */}
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-9 h-9 bg-gradient-to-tr from-[#5932EA] to-[#4623E9] rounded-xl flex items-center justify-center shadow-lg shadow-[rgba(89,50,234,0.3)]">
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <span className="font-poppins font-semibold text-2xl text-black">Dashboard</span>
-              <span className="block text-[10px] text-[#838383] -mt-1 font-medium">v.01</span>
+    <div className="min-h-screen bg-[#D2D7DF] relative flex flex-col overflow-x-hidden selection:bg-[#3482B9] selection:text-white">
+      
+      {/* 1. Dual-Tier Header */}
+      <header className="fixed top-0 left-0 w-full z-30 shadow-md">
+        {/* Tier 1: White logo header banner */}
+        <div className="bg-white h-16 px-4 sm:px-6 flex items-center justify-between border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/fupre_logo.png" 
+              alt="FUPRE Logo" 
+              className="w-10 h-10 object-contain shrink-0"
+            />
+            <div className="text-left font-poppins">
+              <h1 className="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight tracking-tight uppercase">
+                Federal University of
+              </h1>
+              <h1 className="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight tracking-tight uppercase">
+                Petroleum Resources, Effurun
+              </h1>
+              <span className="block font-bold text-red-800 text-[8px] sm:text-[9px] tracking-wider uppercase mt-0.5">
+                Excellence and Relevance
+              </span>
             </div>
           </div>
-
-          {/* List Menu Items */}
-          <nav className="space-y-4">
-            <a href="#" className="flex items-center justify-between px-4 py-3 bg-[#5932EA] text-white rounded-lg transition-all group font-poppins font-medium text-sm">
-              <div className="flex items-center gap-3">
-                <LayoutDashboard className="w-5 h-5 text-white" />
-                <span>Dashboard</span>
-              </div>
-            </a>
-            
-            <a href="#" className="flex items-center justify-between px-4 py-3 text-[#9197B3] hover:bg-[#FAFBFF] rounded-lg transition-all font-poppins font-medium text-sm group">
-              <div className="flex items-center gap-3">
-                <HelpCircle className="w-5 h-5 text-[#9197B3] group-hover:text-[#5932EA]" />
-                <span className="group-hover:text-[#292D32]">Help</span>
-              </div>
-              <ChevronDown className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
-          </nav>
+          <div className="hidden sm:block text-slate-400 font-poppins text-xs font-bold uppercase tracking-wider">
+            Staff Portal
+          </div>
         </div>
 
-        <div className="flex flex-col gap-6">
-          {/* User profile card (Ellipse 8 / Group 30) */}
-          <div className="flex items-center justify-between pt-4 border-t border-[#EEEEEE]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#EAABF0] to-[#5932EA] flex items-center justify-center font-bold text-white uppercase shadow-sm">
+        {/* Tier 2: Blue Navigation Bar */}
+        <div className="bg-[#3482B9] h-12 px-4 sm:px-6 flex items-center justify-between text-white shadow-inner">
+          <button 
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="hidden md:inline text-xs font-semibold">{user.name}</span>
+              <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs uppercase cursor-pointer" onClick={() => setMobileMenuOpen(true)}>
                 {user.name.charAt(0)}
-              </div>
-              <div>
-                <span className="block font-poppins font-semibold text-sm text-black max-w-[120px] truncate" title={user.name}>
-                  {user.name}
-                </span>
-                <span className="block text-[10px] text-[#757575] font-poppins max-w-[120px] truncate" title={unitName || "Staff Member"}>
-                  {unitName || "Staff Member"}
-                </span>
               </div>
             </div>
             <button 
-              onClick={onLogout}
-              className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-[#9197B3] hover:text-[#DF0404] transition-all cursor-pointer"
-              title="Logout"
+              className="p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
+              onClick={() => setMobileMenuOpen(true)}
             >
-              <LogOut className="w-5 h-5" />
+              <ChevronDown className="w-4 h-4" />
             </button>
           </div>
         </div>
-      </aside>
+      </header>
 
-      {/* 2. Main Layout Context */}
-      <main className="flex-1 min-h-screen py-10 px-12 overflow-y-auto z-10 flex flex-col gap-8">
-        {/* Banner Title Greeting */}
-        <div>
-          <h1 className="font-poppins font-normal text-2xl text-black">
-            Hello {user.name.split(" ")[0]} 👋🏼,
-          </h1>
-          <p className="text-xs text-[#9197B3] mt-1 font-medium">
-            You are managing the queue for the **{unitName || "Clearance Office"}**.
-          </p>
-        </div>
-
-        {/* 3. Statistics Widgets Rows (Figma Earning layout parameters) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white py-6 px-10 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.5)] border border-[#F0F4FA]">
-          {/* Stats 1: Total Submissions */}
-          <div className="flex items-center gap-5 pr-6 border-r border-[#F0F0F0] last:border-none">
-            <div className="w-[84px] h-[84px] rounded-full bg-gradient-to-tr from-[#D3FFE7] to-[#EFFFF6] flex items-center justify-center">
-              <Users className="w-10 h-10 text-[#00AC4F]" />
-            </div>
-            <div>
-              <span className="block text-xs font-poppins text-[#ACACAC] mb-1">Total Submissions</span>
-              <span className="block font-poppins font-semibold text-3xl text-[#333333] leading-none mb-1">
-                {totalSubmissions}
-              </span>
-              <span className="text-[10px] text-[#00AC4F] font-bold">
-                Student requests in database
-              </span>
-            </div>
-          </div>
-
-          {/* Stats 2: Action Pending */}
-          <div className="flex items-center gap-5 pr-6 border-r border-[#F0F0F0] last:border-none">
-            <div className="w-[84px] h-[84px] rounded-full bg-orange-50 flex items-center justify-center">
-              <Clock className="w-10 h-10 text-orange-500" />
-            </div>
-            <div>
-              <span className="block text-xs font-poppins text-[#ACACAC] mb-1">Pending Action</span>
-              <span className="block font-poppins font-semibold text-3xl text-[#333333] leading-none mb-1">
-                {pendingCount}
-              </span>
-              <span className={`text-[10px] font-bold ${pendingCount > 0 ? "text-orange-500" : "text-[#ACACAC]"}`}>
-                {pendingCount > 0 ? "Needs immediate review" : "Queue is fully cleared"}
-              </span>
-            </div>
-          </div>
-
-          {/* Stats 3: Completed Reviews */}
-          <div className="flex items-center gap-5 last:border-none">
-            <div className="w-[84px] h-[84px] rounded-full bg-indigo-50 flex items-center justify-center">
-              <CheckSquare className="w-10 h-10 text-[#5932EA]" />
-            </div>
-            <div>
-              <span className="block text-xs font-poppins text-[#ACACAC] mb-1">Reviewed</span>
-              <span className="block font-poppins font-semibold text-3xl text-[#333333] leading-none mb-1">
-                {completedCount}
-              </span>
-              <span className="text-[10px] text-[#5932EA] font-bold">
-                Decisions submitted
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Table Directory Section (Figma Product box card parameters) */}
-        <div className="bg-white py-8 px-6 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.5)] border border-[#F0F4FA] flex-1 flex flex-col justify-between min-h-[500px]">
-          <div>
-            {/* Header controls inside card table */}
-            <div className="flex justify-between items-center mb-6 px-4">
-              <div>
-                <h3 className="font-poppins font-semibold text-2xl text-black">
-                  Clearance Queue
-                </h3>
-                <span className="text-xs text-[#16C098] font-poppins font-normal">
-                  Graduating Submissions
-                </span>
-              </div>
-
-              {/* Search & Sort Widgets */}
-              <div className="flex items-center gap-4">
-                {/* Search control */}
-                <div className="relative w-64">
-                  <Search className="w-5 h-5 text-[#B5B7C0] absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search Student or Matric"
-                    className="w-full bg-[#F9FBFF] border border-none rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#292D32] focus:outline-none focus:ring-2 focus:ring-[#5932EA] transition-all font-poppins"
+      {/* Slide-Drawer Side Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div 
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+          ></div>
+          
+          <aside className="relative w-72 max-w-xs bg-white h-full flex flex-col justify-between py-6 px-5 border-r shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2">
+                  <img 
+                    src="/fupre_logo.png" 
+                    alt="FUPRE Logo" 
+                    className="w-8 h-8 object-contain"
                   />
+                  <span className="font-poppins font-bold text-xs text-slate-900">FUPRE DSCS</span>
+                </div>
+                <button 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5 text-slate-600" />
+                </button>
+              </div>
+
+              <nav className="space-y-3">
+                <a href="#" className="flex items-center justify-between px-3.5 py-2.5 bg-[#3482B9] text-white rounded-lg font-poppins font-medium text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <LayoutDashboard className="w-4 h-4 text-white" />
+                    <span>Dashboard</span>
+                  </div>
+                </a>
+                
+                <a href="#" className="flex items-center justify-between px-3.5 py-2.5 text-slate-500 hover:bg-slate-50 rounded-lg font-poppins font-medium text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <HelpCircle className="w-4 h-4 text-slate-500" />
+                    <span>Help</span>
+                  </div>
+                </a>
+
+                <button 
+                  onClick={() => { setMobileMenuOpen(false); onLogout(); }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-red-500 hover:bg-red-50 rounded-lg font-poppins font-medium text-xs text-left cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 text-red-500" />
+                  <span>Sign Out</span>
+                </button>
+              </nav>
+            </div>
+
+            <div className="flex items-center pt-4 border-t border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#3482B9] flex items-center justify-center font-bold text-white uppercase text-xs">
+                  {user.name.charAt(0)}
+                </div>
+                <div>
+                  <span className="block font-poppins font-semibold text-xs text-slate-800 max-w-[140px] truncate" title={user.name}>
+                    {user.name}
+                  </span>
+                  <span className="block text-[8px] text-slate-400 font-poppins max-w-[140px] truncate" title={unitName || "Staff Member"}>
+                    {unitName || "Staff Member"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* 2. Main Content Grid */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-12 flex flex-col gap-6 z-10">
+        
+        {/* Title & Breadcrumb Block */}
+        <div className="flex flex-col gap-2 mt-2">
+          <h2 className="font-poppins font-bold text-xl sm:text-2xl text-slate-800">
+            Clearance Queue
+          </h2>
+          
+          <div className="bg-[#E2E8F0] px-4 py-2.5 rounded-lg text-xs font-semibold text-slate-600 flex items-center gap-2 border border-slate-300/40">
+            <LayoutDashboard className="w-4 h-4 text-slate-500 shrink-0" />
+            <span>Home</span>
+            <span className="text-slate-400 font-normal">&gt;</span>
+            <span className="text-slate-500 font-normal">Clearance Queue</span>
+          </div>
+        </div>
+
+
+        {/* 4. Portal Statistics widgets */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-poppins">
+          {/* Card 1: Total Submissions (Green) */}
+          <div className="bg-[#00A65A] text-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between min-h-[140px] transform hover:scale-[1.01] transition-transform">
+            <div className="p-6">
+              <span className="block font-bold text-4xl mb-1">{totalSubmissions}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/80">Total Submissions</span>
+            </div>
+            <div 
+              className="bg-[#008d4c] py-2 px-4 text-center text-[10px] sm:text-xs font-semibold text-white/95 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-[#00733e] transition-colors" 
+              onClick={() => handleScrollToSection("queue")}
+            >
+              <span>More info</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Card 2: Action Pending (Orange) */}
+          <div className="bg-[#F39C12] text-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between min-h-[140px] transform hover:scale-[1.01] transition-transform">
+            <div className="p-6">
+              <span className="block font-bold text-4xl mb-1">{pendingCount}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/80">Pending Action</span>
+            </div>
+            <div 
+              className="bg-[#db8b0b] py-2 px-4 text-center text-[10px] sm:text-xs font-semibold text-white/95 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-[#c87f0a] transition-colors" 
+              onClick={() => handleScrollToSection("queue")}
+            >
+              <span>More info</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Card 3: Completed Reviews (Red style) */}
+          <div className="bg-[#DD4B39] text-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between min-h-[140px] transform hover:scale-[1.01] transition-transform">
+            <div className="p-6">
+              <span className="block font-bold text-4xl mb-1">{completedCount}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/80">Reviewed Requests</span>
+            </div>
+            <div 
+              className="bg-[#d73925] py-2 px-4 text-center text-[10px] sm:text-xs font-semibold text-white/95 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-[#c23321] transition-colors" 
+              onClick={() => handleScrollToSection("queue")}
+            >
+              <span>More info</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Responsive Main Content Queue list */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* Clearance Queue List Card (8 columns on lg) */}
+          <div id="queue" className="lg:col-span-8 bg-white py-6 px-4 sm:px-6 rounded-2xl shadow-md border border-slate-200 flex flex-col justify-between min-h-[500px]">
+            <div>
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 px-2">
+                <div>
+                  <h3 className="font-poppins font-semibold text-xl text-slate-800">
+                    Clearance Queue
+                  </h3>
+                  <span className="text-xs text-[#00A65A] font-poppins font-semibold">
+                    Graduating Submissions
+                  </span>
                 </div>
 
-                {/* Filter status dropdown */}
-                <div className="relative">
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="bg-[#F9FBFF] border border-[#EEEEEE] rounded-xl px-4 py-2 text-xs text-[#7E7E7E] focus:outline-none focus:ring-2 focus:ring-[#5932EA] transition-all font-poppins cursor-pointer"
-                  >
-                    <option value="all">Sort by : All</option>
-                    <option value="pending">Pending Action</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-56">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search Student or Matric"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-[#292D32] focus:outline-none focus:ring-2 focus:ring-[#3482B9] transition-all font-poppins"
+                    />
+                  </div>
+
+                  <div className="relative w-full sm:w-auto">
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#3482B9] transition-all font-poppins cursor-pointer"
+                    >
+                      <option value="all">Sort by : All</option>
+                      <option value="pending">Pending Action</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Scrollable Table */}
+              <div className="overflow-x-auto rounded-lg border border-slate-100">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold text-slate-400 font-poppins">
+                      <th className="py-3 px-4">Student Details</th>
+                      <th className="py-3 px-4">Department</th>
+                      <th className="py-3 px-4 text-center">Submission File</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                      <th className="py-3 px-4 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-poppins text-xs font-medium text-[#292D32]">
+                    {filteredSubmissions.length > 0 ? (
+                      filteredSubmissions.map((sub) => {
+                        const style = getStatusStyle(sub.status);
+                        const file = sub.documents?.[0];
+                        
+                        return (
+                          <tr key={sub.id} className="hover:bg-slate-50/55 transition-all">
+                            {/* Student Info */}
+                            <td className="py-4 px-4">
+                              <span className="block font-semibold text-sm text-slate-800">
+                                {sub.student.user.name}
+                              </span>
+                              <span className="block text-[10px] text-slate-400">
+                                {sub.student.matricNumber} / {sub.student.user.email}
+                              </span>
+                            </td>
+                            {/* Department */}
+                            <td className="py-4 px-4 text-slate-500">
+                              {sub.student.department}
+                            </td>
+                            {/* Submission File */}
+                            <td className="py-4 px-4 text-center">
+                              {file ? (
+                                <a
+                                  href={file.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-[#3482B9] hover:underline"
+                                >
+                                  <Eye className="w-3.5 h-3.5" /> View Doc
+                                </a>
+                              ) : (
+                                <span className="text-slate-400 italic text-[11px]">No file</span>
+                              )}
+                            </td>
+                            {/* Status */}
+                            <td className="py-4 px-4 text-center">
+                              <span className={`inline-block border rounded-md px-2.5 py-1 text-[11px] font-semibold ${style.bg} ${style.border} ${style.text} w-28 text-center`}>
+                                {style.label}
+                              </span>
+                            </td>
+                            {/* Actions */}
+                            <td className="py-4 px-4 text-center">
+                              {sub.status === "PENDING_REVIEW" || sub.status === "UNDER_REVIEW" ? (
+                                <div className="inline-flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => handleApprove(sub.id)}
+                                    disabled={actionLoading !== null}
+                                    className="w-8 h-8 rounded-xl bg-green-50 text-green-700 border border-green-200 flex items-center justify-center hover:bg-green-100 transition-colors cursor-pointer disabled:opacity-50"
+                                    title="Approve student clearance"
+                                  >
+                                    {actionLoading === sub.id ? (
+                                      <Loader2 className="animate-spin w-4 h-4" />
+                                    ) : (
+                                      <Check className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => setRejectingRequest(sub)}
+                                    disabled={actionLoading !== null}
+                                    className="w-8 h-8 rounded-xl bg-red-50 text-red-700 border border-red-200 flex items-center justify-center hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
+                                    title="Reject student clearance"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 italic text-[11px]">Finalized</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="py-12 px-4 text-center text-slate-400">
+                          No submissions in this unit review queue.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 px-2 font-poppins text-xs font-semibold">
+              <span className="text-slate-400">
+                Showing {filteredSubmissions.length} of {submissions.length} entries
+              </span>
+              <div className="flex items-center gap-2">
+                <button className="flex items-center justify-center w-6 h-6 border border-slate-200 bg-slate-50 rounded text-slate-500 disabled:opacity-50" disabled>
+                  &lt;
+                </button>
+                <button className="flex items-center justify-center w-6 h-6 border border-[#3482B9] bg-[#3482B9] rounded text-white font-bold">
+                  1
+                </button>
+                <button className="flex items-center justify-center w-6 h-6 border border-slate-200 bg-slate-50 rounded text-slate-500 disabled:opacity-50" disabled>
+                  &gt;
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Staff Info Card Sidebar Panel (4 columns on lg) */}
+          <div className="lg:col-span-4 flex flex-col gap-6 w-full">
+            
+            {/* Staff Profile Card (Blue top border) */}
+            <div className="border-t-4 border-[#3482B9] bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col items-center justify-center text-center font-poppins">
+              <div className="w-24 h-24 rounded-lg border-2 border-slate-200 bg-slate-50 overflow-hidden mb-4 flex items-center justify-center relative shadow-inner">
+                <div className="w-full h-full bg-slate-100 flex items-center justify-center font-extrabold text-slate-400 text-3xl uppercase">
+                  {user.name.charAt(0)}
+                </div>
+              </div>
+              <h3 className="font-bold text-slate-800 text-base mb-1">{user.name}</h3>
+              <div className="px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 mb-4 select-all">
+                {unitName || "Staff Member"}
+              </div>
+
+              {/* Extra profile details */}
+              <div className="w-full border-t border-slate-100 pt-4 mt-2 space-y-2.5 text-left text-xs text-slate-500 font-medium">
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Assigned Office:</span>
+                  <span className="font-bold text-slate-700 text-right">{unitName || "N/A"}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Unit ID:</span>
+                  <span className="font-bold text-slate-700 text-right font-mono text-[10px]">{unitId || "N/A"}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Institutional Email:</span>
+                  <span className="font-bold text-slate-700 text-right max-w-[130px] truncate" title={user.email}>{user.email}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Access Level:</span>
+                  <span className="font-bold text-slate-700 text-right text-xs uppercase tracking-wider text-[#3482B9]">{user.role}</span>
                 </div>
               </div>
             </div>
 
-            {/* Table layout container */}
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-[#EEEEEE] text-left text-xs font-semibold text-[#B5B7C0] font-poppins">
-                    <th className="py-4 px-6">Student details</th>
-                    <th className="py-4 px-6">Department</th>
-                    <th className="py-4 px-6 text-center">Submission File</th>
-                    <th className="py-4 px-6 text-center">Status</th>
-                    <th className="py-4 px-6 text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#EEEEEE] font-poppins text-xs font-medium text-[#292D32]">
-                  {filteredSubmissions.length > 0 ? (
-                    filteredSubmissions.map((sub) => {
-                      const style = getStatusStyle(sub.status);
-                      const file = sub.documents?.[0];
-                      
-                      return (
-                        <tr key={sub.id} className="hover:bg-[#FAFBFF] transition-all group">
-                          {/* Student Details */}
-                          <td className="py-4 px-6">
-                            <span className="block font-semibold text-sm text-black">
-                              {sub.student.user.name}
-                            </span>
-                            <span className="block text-[10px] text-[#9197B3]">
-                              {sub.student.matricNumber} / {sub.student.user.email}
-                            </span>
-                          </td>
-                          {/* Department */}
-                          <td className="py-4 px-6 text-[#7E7E7E] font-poppins">
-                            {sub.student.department}
-                          </td>
-                          {/* Submission File */}
-                          <td className="py-4 px-6 text-center">
-                            {file ? (
-                              <a
-                                href={file.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-[#5932EA] hover:underline font-semibold"
-                              >
-                                <Eye className="w-4 h-4" /> View Doc
-                              </a>
-                            ) : (
-                              <span className="text-[#B5B7C0] italic">No file uploaded</span>
-                            )}
-                          </td>
-                          {/* Status */}
-                          <td className="py-4 px-6 text-center">
-                            <span className={`inline-block border rounded px-3 py-1.5 text-xs font-semibold ${style.bg} ${style.border} ${style.text} w-32 text-center`}>
-                              {style.label}
-                            </span>
-                          </td>
-                          {/* Actions */}
-                          <td className="py-4 px-6 text-center">
-                            {sub.status === "PENDING_REVIEW" || sub.status === "UNDER_REVIEW" ? (
-                              <div className="inline-flex items-center gap-2">
-                                <button
-                                  onClick={() => handleApprove(sub.id)}
-                                  disabled={actionLoading !== null}
-                                  className="w-8 h-8 rounded-lg bg-[rgba(22,192,152,0.15)] text-[#008767] border border-[#00B087] flex items-center justify-center hover:bg-[rgba(22,192,152,0.25)] transition-colors cursor-pointer disabled:opacity-50"
-                                  title="Approve student clearance"
-                                >
-                                  {actionLoading === sub.id ? (
-                                    <Loader2 className="animate-spin w-4 h-4" />
-                                  ) : (
-                                    <Check className="w-4 h-4" />
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => setRejectingRequest(sub)}
-                                  disabled={actionLoading !== null}
-                                  className="w-8 h-8 rounded-lg bg-[#FFC5C5] text-[#DF0404] border border-[#DF0404] flex items-center justify-center hover:bg-[#FFAAAA] transition-colors cursor-pointer disabled:opacity-50"
-                                  title="Reject student clearance"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-[#B5B7C0] italic">Decision Finalized</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="py-12 px-6 text-center text-[#B5B7C0]">
-                        No submissions in this unit review queue.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
           </div>
 
-          {/* Footer showing item details (Figma pagination specs) */}
-          <div className="flex justify-between items-center mt-8 px-4 font-poppins text-xs font-semibold">
-            <span className="text-[#B5B7C0]">
-              Showing {filteredSubmissions.length} of {submissions.length} entries
-            </span>
-            <div className="flex items-center gap-2">
-              <button className="flex items-center justify-center w-6 h-6 border border-[#EEEEEE] bg-[#F5F5F5] rounded text-[#404B52] disabled:opacity-50" disabled>
-                &lt;
-              </button>
-              <button className="flex items-center justify-center w-6 h-6 border border-[#5932EA] bg-[#5932EA] rounded text-white font-bold">
-                1
-              </button>
-              <button className="flex items-center justify-center w-6 h-6 border border-[#EEEEEE] bg-[#F5F5F5] rounded text-[#404B52] disabled:opacity-50" disabled>
-                &gt;
-              </button>
-            </div>
-          </div>
         </div>
+
       </main>
 
-      {/* 5. Rejection Reason Modal */}
+      {/* 6. Rejection Reason Modal */}
       {rejectingRequest && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 transition-all">
-          <div className="bg-white w-full max-w-md rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.9)] border border-[#F0F4FA] p-8 flex flex-col gap-6 relative">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 p-8 flex flex-col gap-6 relative">
             <button 
               onClick={() => { setRejectingRequest(null); setRejectionNote(""); }}
-              className="absolute right-6 top-6 text-[#9197B3] hover:text-black transition-colors cursor-pointer"
+              className="absolute right-6 top-6 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-6 h-6" />
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-[#DF0404]">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-650">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-poppins font-semibold text-lg text-black">
+                <h3 className="font-poppins font-semibold text-lg text-slate-800">
                   Reject Clearance
                 </h3>
-                <p className="text-xs text-[#9197B3] font-poppins">
+                <p className="text-xs text-slate-450 font-poppins">
                   Specify details for correction
                 </p>
               </div>
@@ -543,7 +642,7 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
 
             <form onSubmit={handleRejectSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#9197B3] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                   Rejection Reason / Notes
                 </label>
                 <textarea
@@ -552,14 +651,14 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardProps) 
                   value={rejectionNote}
                   onChange={(e) => setRejectionNote(e.target.value)}
                   placeholder="State the reason (e.g. Missing receipts, incorrect files, unpaid dues)."
-                  className="block w-full px-4 py-3 border border-[#EEEEEE] rounded-xl bg-[#FAFBFF] text-[#292D32] placeholder-[#B5B7C0] focus:outline-none focus:ring-2 focus:ring-[#5932EA] focus:border-transparent transition-all text-xs resize-none font-poppins font-medium leading-relaxed"
+                  className="block w-full px-4 py-3 border border-slate-205 rounded-xl bg-slate-50 text-[#292D32] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3482B9] focus:border-transparent transition-all text-xs resize-none font-poppins font-medium leading-relaxed"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={actionLoading !== null || !rejectionNote.trim()}
-                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl text-xs font-semibold text-white bg-[#DF0404] hover:bg-red-700 focus:outline-none shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-750 focus:outline-none shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {actionLoading === rejectingRequest.id ? (
                   <Loader2 className="animate-spin h-5 w-5 mr-2" />

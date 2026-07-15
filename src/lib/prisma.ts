@@ -1,13 +1,17 @@
-import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { PrismaClient } from "@prisma/client";
-
-// Explicitly override DATABASE_URL for local SQLite/LibSQL runtime execution
-process.env.DATABASE_URL = "file:./dev.db";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 const prismaClientSingleton = () => {
-  const adapter = new PrismaLibSql({
-    url: "file:./dev.db",
+  const connectionString = process.env.DATABASE_URL;
+  const cleanConnectionString = connectionString ? connectionString.split("?")[0] : undefined;
+  const pool = new Pool({
+    connectionString: cleanConnectionString,
+    ssl: {
+      rejectUnauthorized: false,
+    },
   });
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 };
 

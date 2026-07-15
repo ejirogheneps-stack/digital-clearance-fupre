@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, ArrowRight, Lock, Mail, Loader2 } from "lucide-react";
+import { Lock, User, Loader2, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -65,120 +65,149 @@ export default function LoginPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-[#FAFBFF] py-12 px-4 sm:px-6 lg:px-8">
-      {/* Background decoration elements */}
+    <div className="min-h-screen flex flex-col justify-center items-center bg-[#D2D7DF] py-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-[#3482B9] selection:text-white relative">
+      
+      {/* Subtle Background meshes */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-[20%] -left-[10%] w-[500px] h-[500px] rounded-full bg-[#EAABF0] opacity-30 blur-[120px]"></div>
-        <div className="absolute -bottom-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-[#4623E9] opacity-20 blur-[150px]"></div>
+        <div className="absolute -top-[20%] -left-[10%] w-[500px] h-[500px] rounded-full bg-[#EAABF0]/10 blur-[120px]"></div>
+        <div className="absolute -bottom-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-[#3482B9]/10 blur-[150px]"></div>
       </div>
 
       <div className="w-full max-w-md z-10">
-        {/* FUPRE Logo Banner */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-tr from-[#5932EA] to-[#4623E9] rounded-2xl flex items-center justify-center shadow-lg shadow-[rgba(89,50,234,0.3)] mb-4 transform hover:rotate-6 transition-transform">
-            <GraduationCap className="w-9 h-9 text-white" />
+        
+        {/* Main Login Card */}
+        <div className="bg-white rounded-2xl shadow-[0px_15px_40px_rgba(15,32,66,0.15)] border border-slate-200 overflow-hidden flex flex-col">
+          
+          {/* Card Header (Mimicking FUPRE Header) */}
+          <div className="bg-[#DCE1E7] px-6 py-5 border-b border-slate-300/60 flex items-center gap-4">
+            <img 
+              src="/fupre_logo.png" 
+              alt="FUPRE Logo" 
+              className="w-12 h-12 sm:w-14 sm:h-14 object-contain shrink-0"
+            />
+            <div className="text-left font-poppins">
+              <h1 className="font-bold text-slate-800 text-xs sm:text-[13px] leading-tight tracking-tight uppercase">
+                Federal University of
+              </h1>
+              <h1 className="font-bold text-slate-800 text-xs sm:text-[13px] leading-tight tracking-tight uppercase">
+                Petroleum Resources, Effurun
+              </h1>
+              <span className="block font-bold text-red-800 text-[8px] sm:text-[9px] tracking-wider uppercase mt-1">
+                Excellence and Relevance
+              </span>
+            </div>
           </div>
-          <h2 className="text-center text-3xl font-extrabold text-[#292D32] tracking-tight">
-            FUPRE DSCS
-          </h2>
-          <p className="mt-2 text-center text-sm text-[#9197B3]">
-            Digital Student Clearance System
-          </p>
-        </div>
 
-        {/* Login Card */}
-        <div className="bg-white py-8 px-6 sm:px-10 rounded-[30px] shadow-[0px_10px_60px_rgba(226,236,249,0.8)] border border-[#F0F4FA]">
-          <h3 className="text-xl font-semibold text-[#000000] mb-6">
-            Sign In
-          </h3>
+          {/* Card Body */}
+          <div className="p-6 sm:p-8 flex-1">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#5D5A5A] mb-6 font-poppins">
+              Student Login
+            </h2>
 
-          {error && (
-            <div className="mb-4 p-4 rounded-xl bg-[#FFC5C5] border border-[#DF0404] text-sm text-[#DF0404] font-medium transition-all">
-              {error}
-            </div>
-          )}
-
-          <form id="login-form" onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-xs font-semibold text-[#9197B3] uppercase tracking-wider mb-2">
-                Institutional Email
-              </label>
-              <div className="relative rounded-xl shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 h-5 text-[#9197B3]" />
-                </div>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-[#EEEEEE] rounded-xl bg-[#FAFBFF] text-[#292D32] font-medium placeholder-[#B5B7C0] focus:outline-none focus:ring-2 focus:ring-[#5932EA] focus:border-transparent transition-all text-sm"
-                  placeholder="name@fupre.edu.ng"
-                />
+            {error && (
+              <div className="mb-5 p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 font-semibold transition-all">
+                {error}
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-xs font-semibold text-[#9197B3] uppercase tracking-wider mb-2">
-                Password
-              </label>
-              <div className="relative rounded-xl shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 h-5 text-[#9197B3]" />
-                </div>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-[#EEEEEE] rounded-xl bg-[#FAFBFF] text-[#292D32] font-medium placeholder-[#B5B7C0] focus:outline-none focus:ring-2 focus:ring-[#5932EA] focus:border-transparent transition-all text-sm"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-[#5932EA] hover:bg-[#4623E9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5932EA] shadow-lg shadow-[rgba(89,50,234,0.25)] transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                ) : (
-                  <>
-                    Continue <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Quick Login Section */}
-          <div className="mt-8 pt-6 border-t border-[#EEEEEE]">
-            <span className="block text-center text-xs font-semibold text-[#B5B7C0] uppercase tracking-wider mb-4">
-              Demo Access Shortcuts
-            </span>
-            <div className="flex flex-col gap-2">
-              {quickProfiles.map((p) => (
-                <button
-                  key={p.label}
-                  type="button"
-                  onClick={() => handleQuickLogin(p.email, p.pass)}
-                  className="flex items-center justify-between px-4 py-2.5 rounded-xl border border-[#EEEEEE] bg-[#FAFBFF] hover:bg-[#F0F4FA] hover:border-[#5932EA] transition-all text-left text-xs cursor-pointer group"
-                >
-                  <div>
-                    <span className="font-semibold text-[#292D32]">{p.label}</span>
-                    <span className="block text-[10px] text-[#9197B3]">{p.email}</span>
+            <form id="login-form" onSubmit={handleLogin} className="space-y-5">
+              
+              {/* Matric/Email Input */}
+              <div>
+                <div className="relative rounded-lg">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="block w-full pr-10 pl-4 py-3 border border-[#CCCCCC] rounded-md bg-white text-[#292D32] placeholder-[#718096] focus:outline-none focus:ring-2 focus:ring-[#3482B9] focus:border-transparent transition-all text-sm font-medium"
+                    placeholder="Matric/Registration Number"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <User className="h-4 w-4 text-[#718096]" />
                   </div>
-                  <span className="px-2 py-0.5 rounded bg-white border border-[#EEEEEE] group-hover:border-[#5932EA] group-hover:text-[#5932EA] transition-all text-[10px] font-bold tracking-wider text-[#9197B3]">
-                    {p.role}
-                  </span>
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div>
+                <div className="relative rounded-lg">
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full pr-10 pl-4 py-3 border border-[#CCCCCC] rounded-md bg-white text-[#292D32] placeholder-[#718096] focus:outline-none focus:ring-2 focus:ring-[#3482B9] focus:border-transparent transition-all text-sm font-medium"
+                    placeholder="Password"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-[#718096]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions Row */}
+              <div className="flex items-center justify-between pt-1">
+                <a 
+                  href="#" 
+                  className="text-xs font-semibold text-[#3482B9] hover:underline cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    alert("Please contact the ICT unit at soap@fupre.edu.ng to reset your password.");
+                  }}
+                >
+                  Forgot password?
+                </a>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex items-center justify-center py-2.5 px-6 border border-transparent rounded-xl text-sm font-semibold text-white bg-[#3482B9] hover:bg-[#2a6996] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3482B9] shadow-md shadow-[#3482B9]/20 hover:shadow-lg transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                  ) : (
+                    "Log In"
+                  )}
                 </button>
-              ))}
-            </div>
+              </div>
+
+            </form>
+          </div>
+
+          {/* Card Footer */}
+          <div className="bg-[#E6E8EA] px-6 py-4 border-t border-slate-200/80 text-center">
+            <span className="text-[11px] text-slate-600 font-semibold tracking-wide font-poppins">
+              For technical support email: soap@fupre.edu.ng
+            </span>
+          </div>
+
+        </div>
+
+        {/* Demo Access Shortcuts */}
+        <div className="mt-8 bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200/80 p-5 shadow-sm">
+          <span className="block text-center text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 font-poppins">
+            Demo Access Shortcuts
+          </span>
+          <div className="flex flex-col gap-2">
+            {quickProfiles.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => handleQuickLogin(p.email, p.pass)}
+                className="flex items-center justify-between px-4 py-2.5 rounded-xl border border-slate-200/60 bg-white hover:bg-slate-50 hover:border-[#3482B9]/60 transition-all text-left text-xs cursor-pointer group"
+              >
+                <div>
+                  <span className="font-semibold text-slate-800">{p.label}</span>
+                  <span className="block text-[10px] text-slate-400">{p.email}</span>
+                </div>
+                <span className="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 group-hover:border-[#3482B9]/40 group-hover:text-[#3482B9] transition-all text-[10px] font-bold tracking-wider text-slate-500">
+                  {p.role}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
+
       </div>
     </div>
   );
